@@ -6,7 +6,7 @@
 - The detailed designs for different hierarchy layers of TiKV
 - The techniques we choose to build TiKV
 - Any problem we meet when we build TiKV and how we solve them
-- How can you build your own services based on TiKV
+- How you can build your own services based on TiKV
 
 ## Contributing to this repo
 
