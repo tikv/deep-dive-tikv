@@ -89,7 +89,7 @@ $$
 R=O(logN/B)+O(log(N/(kB))+O(log(N/k^2B)+...+O(log(N/k^nB)+1=O((log^2N/B)/logk)
 $$
 
-# Summary
+## Summary
 
 The following table shows the summary of various kinds of amplification
 
