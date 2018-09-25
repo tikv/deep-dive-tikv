@@ -24,7 +24,7 @@ Fortunately, Google met the same problem and had already published some papers t
 
 Following is the architecture of TiKV:
 
-![Architecture](./architecture.png)
+![Architecture](architecture.png)
 
 According to the picture, there are three TiKV instances in the cluster and each instance uses one [RocksDB](https://github.com/facebook/rocksdb) to save data. On top of RocksDB, we use [Raft](https://raft.github.io/) consensus algorithm to replicate the data. Mostly, we should use at least three replicas to keep data safe and consistent, and these replicas form a Raft group.
 
