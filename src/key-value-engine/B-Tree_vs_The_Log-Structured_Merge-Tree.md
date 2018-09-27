@@ -40,11 +40,11 @@ This section discusses about the write amplification and read amplification of B
 
 In the B+ tree, copies of the keys are stored in the internal nodes; the keys and records are stored in leaves; in addition, a leaf node may include a pointer to the next leaf node to increase sequential access performance.
 
-To simplify the analysis, assume that the block size of the tree is `B`, and keys, pointers, and records are constant size, so that each internal node contains $O(B)$ children and each leaf contains $O(B)$ data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B tree is 
-$$
-O(log_BN/B)
-$$
-where `N` is the size of database.
+To simplify the analysis, assume that the block size of the tree is `B`, and keys, pointers, and records are constant size, so that each internal node contains `O(B)` children and each leaf contains `O(B)` data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B tree is 
+
+<center><code>O(log<sub>B</sub>N/B)</code></center>
+
+where `N` is the size of the database.
 
 #### Write Amplification
 
@@ -52,50 +52,50 @@ For the worst-case insertion workloads, every insertion requires writing the lea
 
 #### Read Amplification
 
-The number of disk reads for any query is at most $O(log_BN/B)$ which is the depth of the tree. 
+The number of disk reads for any query is at most <code>O(log<sub>B</sub>N/B)</code> which is the depth of the tree. 
 
 ### Level-Based LSM-tree
 
-In level-based LSM-tree, data is organized into levels. Each level contains one run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor `k` is specified as the magnification of data size at each level 
-$$
-level_i = level_{i-1}*k
-$$
-We can analyze Level-based LSM-tree as follows. If the growth factor is `k` and the smallest level is a single file of size `B`, then the number of levels is 
+In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor `k` is specified as the magnification of data size at each level 
 
-$$
-Θ(log_kN/B)
-$$
+<center><code>level<sub>i</sub> = level<sub>i-1</sub>*k</code></center>
+
+We can analyze the Level-based LSM-tree as follows. If the growth factor is `k` and the smallest level is a single file of size `B`, then the number of levels is 
+
+<center><code>Θ(log<sub>k</sub>N/B)</code></center>
 
 #### Write Amplification
 
 Data must be moved out of each level once, but data from a given level is merged repeatedly with data from the previous level. On average, after being first written into a level, each data item is remerged back into the same level about `k/2` times. So the total write amplification is 
-$$
-Θ(k*log_kN/B)
-$$
+
+<center><code>Θ(k*log<sub>k</sub>N/B)</code><center>
 
 #### Read Amplification
 
 To perform a short range query in the cold cache case, we must perform a binary search
 on each of the levels.
 
-For the highest level `i`, the data size is $O(N)$, so that it performs $O(logN/B)$ disk reads. 
-For the previous level `i - 1`, the data size is is $O(N/k)$, so that it performs $O(log(N/(kB))$ disk reads. 
-For level `i - 2`, the data size is $O(N/k^2)$, so that it performs $O(log(N/k^2B)$ disk reads.
-…
-For level `i - n`, the data size is O(N/k^n), so that it performs O(log(N/k^nB) disk reads.
+For the highest <code>level<sub>i</sub></code>, the data size is `O(N)`, so that it performs `O(logN/B)` disk reads. 
 
-So that the total number disk reads is 
-$$
-R=O(logN/B)+O(log(N/(kB))+O(log(N/k^2B)+...+O(log(N/k^nB)+1=O((log^2N/B)/logk)
-$$
+For the previous <code>level<sub>i-1</sub></code>, the data size is is `O(N/k)`, so that it performs `O(log(N/(kB))` disk reads. 
+
+For <code>level<sub>i-2</sub></code>, the data size is <code>O(N/k<sup>2</sup>)</code>, so that it performs <code>O(log(N/k<sup>2</sup>B)</code> disk reads.
+
+…
+
+For <code>level<sub>i-n</sub></code>, the data size is <code>O(N/k<sup>n</sup>)</code>, so that it performs <code>O(log(N/k<sup>n</sup>B)</code> disk reads.
+
+So that the total number of disk reads is 
+
+<center><code>R = O(logN/B) + O(log(N/(kB)) + O(log(N/k<sup>2</sup>B) + ... + O(log(N/k<sup>n</sup>B) + 1 = O((log<sup>2</sup>N/B)/logk)</code></center>
 
 ## Summary
 
 The following table shows the summary of various kinds of amplification
 
-|    Data Structure    | Write Amplification |  Read Amplification  |
-| :------------------: | :-----------------: | :------------------: |
-|       B+ tree        |       $Θ(B)$        |    $O(log_BN/B)$     |
-| Level-Based LSM-tree |   $Θ(klog_kN/B)$    | $Θ((log^2N/B)/logk)$ |
+|    Data Structure    |  Write Amplification   |      Read Amplification      |
+| :------------------: | :--------------------: | :--------------------------: |
+|       B+ tree        |          Θ(B)          |    O(log<sub>B</sub>N/B)     |
+| Level-Based LSM-tree | Θ(klog<sub>k</sub>N/B) | Θ((log<sup>2</sup>N/B)/logk) |
 
 Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, We can come to conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.
