@@ -98,4 +98,4 @@ The following table shows the summary of various kinds of amplification
 |       B+ tree        |          Θ(B)          |    O(log<sub>B</sub>N/B)     |
 | Level-Based LSM-tree | Θ(klog<sub>k</sub>N/B) | Θ((log<sup>2</sup>N/B)/logk) |
 
-Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, We can come to conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.
+Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, We can come to a conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.
