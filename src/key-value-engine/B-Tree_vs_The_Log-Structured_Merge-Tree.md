@@ -42,7 +42,7 @@ In the B+ tree, copies of the keys are stored in the internal nodes; the keys an
 
 To simplify the analysis, assume that the block size of the tree is `B`, and keys, pointers, and records are constant size, so that each internal node contains `O(B)` children and each leaf contains `O(B)` data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B tree is 
 
-<center>O(log<sub>B</sub>N/B)</center>
+<center><code>O(log<sub>B</sub>N/B)</code></center>
 
 where `N` is the size of the database.
 
@@ -58,17 +58,17 @@ The number of disk reads for any query is at most <code>O(log<sub>B</sub>N/B)</c
 
 In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor `k` is specified as the magnification of data size at each level 
 
-<center>level<sub>i</sub> = level<sub>i-1</sub>*k</center>
+<center><code>level<sub>i</sub> = level<sub>i-1</sub>*k</code></center>
 
 We can analyze the Level-based LSM-tree as follows. If the growth factor is `k` and the smallest level is a single file of size `B`, then the number of levels is 
 
-<center>Θ(log<sub>k</sub>N/B)</center>
+<center><code>Θ(log<sub>k</sub>N/B)</code></center>
 
 #### Write Amplification
 
 Data must be moved out of each level once, but data from a given level is merged repeatedly with data from the previous level. On average, after being first written into a level, each data item is remerged back into the same level about `k/2` times. So the total write amplification is 
 
-<center>Θ(k*log<sub>k</sub>N/B)<center>
+<center><code>Θ(k*log<sub>k</sub>N/B)</code><center>
 
 #### Read Amplification
 
@@ -87,7 +87,7 @@ For <code>level<sub>i-n</sub></code>, the data size is <code>O(N/k<sup>n</sup>)<
 
 So that the total number of disk reads is 
 
-<center>R = O(logN/B) + O(log(N/(kB)) + O(log(N/k<sup>2</sup>B) + ... + O(log(N/k<sup>n</sup>B) + 1 = O((log<sup>2</sup>N/B)/logk)</center>
+<center><code>R = O(logN/B) + O(log(N/(kB)) + O(log(N/k<sup>2</sup>B) + ... + O(log(N/k<sup>n</sup>B) + 1 = O((log<sup>2</sup>N/B)/logk)</code></center>
 
 ## Summary
 
