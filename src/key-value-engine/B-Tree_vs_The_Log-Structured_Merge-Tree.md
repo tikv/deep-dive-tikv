@@ -4,7 +4,7 @@
 
 ## Metrics
 
-In general, there are three most important metrics to measure the performance of a data structure, which include write amplification, read amplification, and space amplification. This section aims to describes these metrics.
+In general, there are three most important metrics to measure the performance of a data structure, which include write amplification, read amplification, and space amplification. This section aims to describe these metrics.
 
 ### Write Amplification
 
@@ -32,9 +32,9 @@ For example, if you put 10MB in the database and this database uses 100MB on the
 
 The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The [B+ tree](https://en.wikipedia.org/wiki/B%2B_tree#Insertion) is one of the most famous variations of B-tree, behind which the idea is that internal nodes only contain keys, and to which an additional level which contains values is added at the bottom with linked leaves.
 
-LSM-tree performs `compaction` to merge several `sstable`s into one new `sstable` which contains only the live data from the input `sstable`s. Compaction helps LSM-tree to recycle space and reduce read amplification. There are two kinds of `compaction strategy` which is `Size-Tiered compaction strategy` (STCS) and `Level-Based compaction strategy` (LBCS). The idea behind STCS is compacting small `sstable`s into medium `sstable`s when LSM-tree has enough small `sstable`s and compacting medium `sstable`s into large `sstable`s when LSM-tree has enough medium `sstable`s. The idea of LBCS is to organize data into levels which contains one sorted run..
+LSM-tree performs `compaction` to merge several `sstable`s into one new `sstable` which contains only the live data from the input `sstable`s. Compaction helps LSM-tree to recycle space and reduce read amplification. There are two kinds of `compaction strategy` which is `Size-Tiered compaction strategy` (STCS) and `Level-Based compaction strategy` (LBCS). The idea behind STCS is compacting small `sstable`s into medium `sstable`s when LSM-tree has enough small `sstable`s and compacting medium `sstable`s into large `sstable`s when LSM-tree has enough medium `sstable`s. The idea of LBCS is to organize data into levels and each level contains one sorted run. Once a level accumulates enough data, some of data at this level will be compacted to the higher level.
 
-This section discusses about the write amplification and read amplification of B+tree and Level-Based LSM-tree. 
+This section discusses the write amplification and read amplification of B+tree and Level-Based LSM-tree. 
 
 ### B+ Tree
 
@@ -56,7 +56,7 @@ The number of disk reads for any query is at most <code>O(log<sub>B</sub>N/B)</c
 
 ### Level-Based LSM-tree
 
-In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor `k` is specified as the magnification of data size at each level 
+In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor `k` is specified as the magnification of data size at each level.
 
 <center><code>level<sub>i</sub> = level<sub>i-1</sub>*k</code></center>
 
@@ -91,11 +91,11 @@ So that the total number of disk reads is
 
 ## Summary
 
-The following table shows the summary of various kinds of amplification
+The following table shows the summary of various kinds of amplification:
 
 |    Data Structure    |  Write Amplification   |      Read Amplification      |
 | :------------------: | :--------------------: | :--------------------------: |
 |       B+ tree        |          Θ(B)          |    O(log<sub>B</sub>N/B)     |
 | Level-Based LSM-tree | Θ(klog<sub>k</sub>N/B) | Θ((log<sup>2</sup>N/B)/logk) |
 
-Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, We can come to a conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.
+Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, we can come to a conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.
