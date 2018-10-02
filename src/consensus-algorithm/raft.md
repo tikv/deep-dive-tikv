@@ -1,6 +1,6 @@
 # Raft
 
-In 2014, Diego Ongaro and John Ousterhout presented the Raft algorithm. It is explained succinctly in a [paper](https://raft.github.io/raft.pdf) and detailed at length in a [thesis](https://ramcloud.stanford.edu/~ongaro/thesis.pdf).
+In 2014, Diego Ongaro and John Ousterhout presented the Raft algorithm. It is explained succinctly in a [paper(https://raft.github.io/raft.pdf) and detailed at length in a [thesis](https://ramcloud.stanford.edu/~ongaro/thesis.pdf).
 
 Raft defines a strong, single leader and number of followers in a group of peers. The group represents a **replicated state machine**. Only the leader may service client requests. The leader replicates actions to the followers.
 
