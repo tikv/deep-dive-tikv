@@ -4,5 +4,3 @@ multilingual = false
 src = "src"
 title = "Head First TiKV"
 
-[output.html]
-theme = "theme"
