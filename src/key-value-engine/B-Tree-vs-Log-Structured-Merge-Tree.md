@@ -24,9 +24,9 @@ For example, if you need to read 5 pages to answer a query, read amplification i
 
 Note that the units of write amplification and read amplification are different. Write amplification measures how much more data is written than the application thought it was writing, whereas read amplification counts the number of disk reads to perform a query.
 
-Read amplification is measured separately for point query and range queries. For range queries the range length matters (the number of rows to be fetched). 
+Read amplification is defined separately for point query and range queries. For range queries the range length matters (the number of rows to be fetched). 
 
-Cache is a critical factor for read amplification. For example a B-tree in the cold-cache case, a point query requires <code>O(log<sub>B</sub>N)</code> disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.
+Cache is a critical factor for read amplification. For example a B-tree in the cold-cache case, a point query requires \\(O(log_BN)\\) disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.
 
 ### Space Amplification
 
@@ -42,7 +42,7 @@ B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki
 
 ![](B-trees.gif)
 
-> Figure 1. 
+> Figure 1. The root node is shown at the top of the tree, and in this case happens to contain a single pivot (20), indicating that records with key k where k ≤ 20 are stored in the first child, and records with key k where k > 20 are stored in the second child. The first child contains two pivot keys (11 and 15), indicating that records with key k where k ≤ 11 is stored in the first child, those with 11 < k ≤ 15 are stored in the second child, and those with k > 15 are stored in the third child. The leftmost leaf node contains four values (3, 5, and 7).
 
 The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The [B+ tree](https://en.wikipedia.org/wiki/B%2B_tree#Insertion) is one of the most famous variations of B-tree. The idea behind B+ tree is that internal nodes only contain keys, and an additional level which contains values is added at the bottom with linked leaves.
 
@@ -50,7 +50,7 @@ LSM-tree is just like other search trees, maintain key-value pairs. It maintains
 
 ![](LSM_Tree.png)
 
-> Figure 2. 
+> Figure 2. The LSM-tree contains \\(k\\) conponents. Data starts in \\(C_0\\), then gets merged into the \\(C_1\\). Eventually the \\(C_1\\) is merged into the \\(C_2\\), and so forth.
 
 LSM-tree performs `compaction` to merge several `SSTable`s into one new `SSTable` which contains only the live data from the input `SSTable`s. Compaction helps LSM-tree to recycle space and reduce read amplification. There are two kinds of `compaction strategy` which is `Size-Tiered compaction strategy` (STCS) and `Level-Based compaction strategy` (LBCS). The idea behind STCS is compacting small `SSTable`s into medium `SSTable`s when LSM-tree has enough small `SSTable`s and compacting medium `SSTable`s into large `SSTable`s when LSM-tree has enough medium `SSTable`s. The idea of LBCS is to organize data into levels and each level contains one sorted run. Once a level accumulates enough data, some of data at this level will be compacted to the higher level.
 
@@ -60,62 +60,71 @@ This section discusses the write amplification and read amplification of B+tree 
 
 In the B+ tree, copies of the keys are stored in the internal nodes; the keys and records are stored in leaves; in addition, a leaf node may include a pointer to the next leaf node to increase sequential access performance.
 
-To simplify the analysis, assume that the block size of the tree is `B` measured in bytes, and keys, pointers, and records are constant size, so that each internal node contains `O(B)` children and each leaf contains `O(B)` data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B tree is 
-
-<center><code>O(log<sub>B</sub>N/B)</code></center>
-
-where `N` is the size of the database.
+To simplify the analysis, assume that the block size of the tree is \\(B\\) measured in bytes, and keys, pointers, and records are constant size, so that each internal node contains \\(O(B)\\) children and each leaf contains \\(O(B)\\) data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B tree is 
+$$
+O(log_BN/B)
+$$
+where \\(N\\) is the size of the database.
 
 #### Write Amplification
 
-For the worst-case insertion workloads, every insertion requires writing the leaf block containing the record, so the write amplification is `B`.
+For the worst-case insertion workloads, every insertion requires writing the leaf block containing the record, so the write amplification is \\(B\\).
 
 #### Read Amplification
 
-The number of disk reads for any query is at most <code>O(log<sub>B</sub>N/B)</code> which is the depth of the tree. 
+The number of disk reads for query is at most \\(O(log_BN/B)\\) which is the depth of the tree. 
 
 ### Level-Based LSM-tree
 
-In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor `k` is specified as the magnification of data size at each level.
+In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor \\(k\\) is specified as the magnification of data size at each level.
 
-<center><code>level<sub>i</sub> = level<sub>i-1</sub>*k</code></center>
+$$
+level_i = level_{i-1} * k
+$$
+We can analyze the Level-based LSM-tree as follows. If the growth factor is \\(k\\) and the smallest level is a single file of size \\(B\\), then the number of levels is 
 
-We can analyze the Level-based LSM-tree as follows. If the growth factor is `k` and the smallest level is a single file of size `B`, then the number of levels is 
-
-<center><code>Θ(log<sub>k</sub>N/B)</code></center>
+$$
+Θ(log_kN/B)
+$$
+where \\(N\\) is the size of the database. In order to simplify the analysis, we assumes that database size is stable and grows slowly over time, so that the size of database will be nearly equal as the size of last level.
 
 #### Write Amplification
 
-Data must be moved out of each level once, but data from a given level is merged repeatedly with data from the previous level. On average, after being first written into a level, each data item is remerged back into the same level about `k/2` times. So the total write amplification is 
-
-<center><code>Θ(k*log<sub>k</sub>N/B)</code><center>
+Data must be moved out of each level once, but data from a given level is merged repeatedly with data from the previous level. On average, after being first written into a level, each data item is remerged back into the same level about \\(k/2\\) times. So the total write amplification is 
+$$
+Θ(k*log_kN/B)
+$$
 
 #### Read Amplification
 
 To perform a short range query in the cold cache case, we must perform a binary search
 on each of the levels.
 
-For the highest <code>level<sub>i</sub></code>, the data size is `O(N)`, so that it performs `O(logN/B)` disk reads. 
+For the highest \\(level_i\\), the data size is \\(O(N)\\), so that it performs \\(O(logN/B)\\) disk reads. 
 
-For the previous <code>level<sub>i-1</sub></code>, the data size is is `O(N/k)`, so that it performs `O(log(N/(kB))` disk reads. 
+For the previous \\(level_{i-1}\\), the data size is is \\(O(N/k)\\), so that it performs \\(O(log(N/(kB))\\) disk reads. 
 
-For <code>level<sub>i-2</sub></code>, the data size is <code>O(N/k<sup>2</sup>)</code>, so that it performs <code>O(log(N/k<sup>2</sup>B)</code> disk reads.
+For \\(level_{i-2}\\), the data size is \\(O(N/k^2)\\), so that it performs \\(O(log(N/k^2B)\\) disk reads.
 
 …
 
-For <code>level<sub>i-n</sub></code>, the data size is <code>O(N/k<sup>n</sup>)</code>, so that it performs <code>O(log(N/k<sup>n</sup>B)</code> disk reads.
+For \\(level_{i-n}\\), the data size is \\(O(N/k^n)\\), so that it performs \\(O(log(N/k^nB)\\) disk reads.
 
 So that the total number of disk reads is 
 
-<center><code>R = O(logN/B) + O(log(N/(kB)) + O(log(N/k<sup>2</sup>B) + ... + O(log(N/k<sup>n</sup>B) + 1 = O((log<sup>2</sup>N/B)/logk)</code></center>
+$$
+R = O(logN/B) + O(log(N/(kB)) + O(log(N/k^2B) + ... + O(log(N/k^nB) + 1 = O((log^2N/B)/logk)
+$$
 
 ## Summary
 
 The following table shows the summary of various kinds of amplification:
 
-|    Data Structure    |  Write Amplification   |      Read Amplification      |
-| :------------------: | :--------------------: | :--------------------------: |
-|       B+ tree        |          Θ(B)          |    O(log<sub>B</sub>N/B)     |
-| Level-Based LSM-tree | Θ(klog<sub>k</sub>N/B) | Θ((log<sup>2</sup>N/B)/logk) |
+|    Data Structure    | Write Amplification |    Read Amplification    |
+| :------------------: | :-----------------: | :----------------------: |
+|       B+ tree        |     \\(Θ(B)\\)      |    \\(O(log_BN/B)\\)     |
+| Level-Based LSM-tree | \\(Θ(klog_kN/B)\\)  | \\(Θ((log^2N/B)/logk)\\) |
+
+> Table 1. A summary of the write amplification and read amplification for range queries.
 
 Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, we can come to a conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.
