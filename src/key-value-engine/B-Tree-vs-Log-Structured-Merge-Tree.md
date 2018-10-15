@@ -14,7 +14,7 @@ For example, if you are writing 10 MB to the database and you observe 30 MB disk
 
 Flash memory and solid-state drives (SSDs) can be written to only a finite number of times, so that write amplification will decrease the flash lifetime.
 
-There is another write amplification phenomenon associated with the flash memory and SSDs because flash memory must be erased before it can be rewritten.
+There is another write amplification associated with the flash memory and SSDs because flash memory must be erased before it can be rewritten.
 
 ### Read Amplification
 
@@ -22,9 +22,9 @@ There is another write amplification phenomenon associated with the flash memory
 
 For example, if you need to read 5 pages to answer a query, read amplification is 5. 
 
-Note that the units are different for write amplification and read amplification. Write amplification measures how much more data is written than the application thought it was writing, whereas read amplification counts the number of I/O’s to perform a read.
+Note that the units of write amplification and read amplification are different. Write amplification measures how much more data is written than the application thought it was writing, whereas read amplification counts the number of disk reads to perform a query.
 
-Read-amp is defined separately for point and range queries. For range queries the range length matters (the number of rows to be fetched). 
+Read amplification is measured separately for point query and range queries. For range queries the range length matters (the number of rows to be fetched). 
 
 Cache is a critical factor for read amplification. For example a B-tree in the cold-cache case, a point query requires <code>O(log<sub>B</sub>N)</code> disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.
 
