@@ -1,14 +1,14 @@
-# B-Tree vs The Log-Structured Merge-Tree
+# B-Tree vs Log-Structured Merge-Tree
 
-[B-tree](https://en.wikipedia.org/wiki/B-tree) and [The Log-Structured Merge-tree](https://en.wikipedia.org/wiki/Log-structured_merge-tree) (LSM-tree) are the two most widely used data structures for data-intensive applications to organize and store data. However, each of them has its own advantages and disadvantages. This article aims to use the quantitative approaches to compare these two data structures.
+[B-tree](https://en.wikipedia.org/wiki/B-tree) and [Log-Structured Merge-tree](https://en.wikipedia.org/wiki/Log-structured_merge-tree) (LSM-tree) are the two most widely used data structures for data-intensive applications to organize and store data. However, each of them has its own advantages and disadvantages. This article aims to use the quantitative approaches to compare these two data structures. 
 
 ## Metrics
 
-In general, there are three most important metrics to measure the performance of a data structure, which include write amplification, read amplification, and space amplification. This section aims to describe these metrics.
+In general, there are three most important metrics to measure the performance of a data structure, which include write amplification, read amplification, and space amplification. This section aims to describe these metrics. 
 
 ### Write Amplification
 
-`Write amplification` is the ratio of the amount of data written to the storage medium versus the amount of data written to the database. 
+`Write amplification` is the ratio of the amount of data written to the storage device versus the amount of data written to the database. 
 
 For example, if you are writing 10 MB to the database and you observe 30 MB disk write rate, your write amplification is 3.
 
@@ -20,19 +20,39 @@ There is another write amplification phenomenon associated with the flash memory
 
 `Read amplification` is the number of disk reads per query. 
 
-For example, if you need to read 5 pages to answer a query, read amplification is 5.
+For example, if you need to read 5 pages to answer a query, read amplification is 5. 
+
+Note that the units are different for write amplification and read amplification. Write amplification measures how much more data is written than the application thought it was writing, whereas read amplification counts the number of I/O’s to perform a read.
+
+Read-amp is defined separately for point and range queries. For range queries the range length matters (the number of rows to be fetched). 
+
+Cache is a critical factor for read amplification. For example a B-tree in the cold-cache case, a point query requires <code>O(log<sub>B</sub>N)</code> disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.
 
 ### Space Amplification
 
-`Space amplification` is the ratio of the amount of data on the storage medium versus the amount of data on the database. 
+`Space amplification` is the ratio of the amount of data on the storage device versus the amount of data on the database. 
 
 For example, if you put 10MB in the database and this database uses 100MB on the disk, then the space amplification is 10.
 
+Generally speaking,  an data structure can optimize for at most two from read, write, and space amplification. This means one data structure is unlikely to be better than another at all three. For example a B-tree has less read amplification than an LSM-tree while an LSM-tree has less write amplification than a B-tree. 
+
 ## Analysis
 
-The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The [B+ tree](https://en.wikipedia.org/wiki/B%2B_tree#Insertion) is one of the most famous variations of B-tree, behind which the idea is that internal nodes only contain keys, and to which an additional level which contains values is added at the bottom with linked leaves.
+B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki/Binary_search_tree) in which a node can have more than two children. There are two kinds of node in B-tree, internal nodes ,and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range, internal nodes may be joined or split. An example of B-tree appears in *Figure 1*.
 
-LSM-tree performs `compaction` to merge several `sstable`s into one new `sstable` which contains only the live data from the input `sstable`s. Compaction helps LSM-tree to recycle space and reduce read amplification. There are two kinds of `compaction strategy` which is `Size-Tiered compaction strategy` (STCS) and `Level-Based compaction strategy` (LBCS). The idea behind STCS is compacting small `sstable`s into medium `sstable`s when LSM-tree has enough small `sstable`s and compacting medium `sstable`s into large `sstable`s when LSM-tree has enough medium `sstable`s. The idea of LBCS is to organize data into levels and each level contains one sorted run. Once a level accumulates enough data, some of data at this level will be compacted to the higher level.
+![](B-trees.gif)
+
+> Figure 1. 
+
+The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The [B+ tree](https://en.wikipedia.org/wiki/B%2B_tree#Insertion) is one of the most famous variations of B-tree. The idea behind B+ tree is that internal nodes only contain keys, and an additional level which contains values is added at the bottom with linked leaves.
+
+LSM-tree is just like other search trees, maintain key-value pairs. It maintains data in two or more separate structures, each of which is optimized for its respective underlying storage medium; data is synchronized between the two structures efficiently, in batches. An example of LSM-tree appears in *Figure 2*.
+
+![](LSM_Tree.png)
+
+> Figure 2. 
+
+LSM-tree performs `compaction` to merge several `SSTable`s into one new `SSTable` which contains only the live data from the input `SSTable`s. Compaction helps LSM-tree to recycle space and reduce read amplification. There are two kinds of `compaction strategy` which is `Size-Tiered compaction strategy` (STCS) and `Level-Based compaction strategy` (LBCS). The idea behind STCS is compacting small `SSTable`s into medium `SSTable`s when LSM-tree has enough small `SSTable`s and compacting medium `SSTable`s into large `SSTable`s when LSM-tree has enough medium `SSTable`s. The idea of LBCS is to organize data into levels and each level contains one sorted run. Once a level accumulates enough data, some of data at this level will be compacted to the higher level.
 
 This section discusses the write amplification and read amplification of B+tree and Level-Based LSM-tree. 
 
@@ -40,7 +60,7 @@ This section discusses the write amplification and read amplification of B+tree 
 
 In the B+ tree, copies of the keys are stored in the internal nodes; the keys and records are stored in leaves; in addition, a leaf node may include a pointer to the next leaf node to increase sequential access performance.
 
-To simplify the analysis, assume that the block size of the tree is `B`, and keys, pointers, and records are constant size, so that each internal node contains `O(B)` children and each leaf contains `O(B)` data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B tree is 
+To simplify the analysis, assume that the block size of the tree is `B` measured in bytes, and keys, pointers, and records are constant size, so that each internal node contains `O(B)` children and each leaf contains `O(B)` data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B tree is 
 
 <center><code>O(log<sub>B</sub>N/B)</code></center>
 
