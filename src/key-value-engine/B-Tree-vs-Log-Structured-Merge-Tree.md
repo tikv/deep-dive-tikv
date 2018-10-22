@@ -1,10 +1,10 @@
 # B-Tree vs Log-Structured Merge-Tree
 
-[B-tree](https://en.wikipedia.org/wiki/B-tree) and [Log-Structured Merge-tree](https://en.wikipedia.org/wiki/Log-structured_merge-tree) (LSM-tree) are the two most widely used data structures for data-intensive applications to organize and store data. However, each of them has its own advantages and disadvantages. This article aims to use the quantitative approaches to compare these two data structures. 
+The [B-tree](https://en.wikipedia.org/wiki/B-tree) and the [Log-Structured Merge-tree](https://en.wikipedia.org/wiki/Log-structured_merge-tree) (LSM-tree) are the two most widely used data structures for data-intensive applications to organize and store data. However, each of them has its own advantages and disadvantages. This article aims to use the quantitative approaches to compare these two data structures. 
 
 ## Metrics
 
-In general, there are three most important metrics to measure the performance of a data structure, which include write amplification, read amplification, and space amplification. This section aims to describe these metrics. 
+In general, there are three critical metrics to measure the performance of a data structure, which include write amplification, read amplification, and space amplification. This section aims to describe these metrics. 
 
 ### Write Amplification
 
@@ -12,7 +12,7 @@ In general, there are three most important metrics to measure the performance of
 
 For example, if you are writing 10 MB to the database and you observe 30 MB disk write rate, your write amplification is 3.
 
-Flash memory and solid-state drives (SSDs) can be written to only a finite number of times, so that write amplification will decrease the flash lifetime.
+Flash memory and solid-state drives (SSDs) can be written to only a finite number of times, so write amplification will decrease the flash lifetime.
 
 There is another write amplification associated with the flash memory and SSDs because flash memory must be erased before it can be rewritten.
 
@@ -26,7 +26,7 @@ Note that the units of write amplification and read amplification are different.
 
 Read amplification is defined separately for point query and range queries. For range queries the range length matters (the number of rows to be fetched). 
 
-Cache is a critical factor for read amplification. For example a B-tree in the cold-cache case, a point query requires \\(O(log_BN)\\) disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.
+Caching is a critical factor for read amplification. For example a B-tree in the cold-cache case, a point query requires \\(O(log_BN)\\) disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.
 
 ### Space Amplification
 
@@ -38,7 +38,7 @@ Generally speaking,  an data structure can optimize for at most two from read, w
 
 ## Analysis
 
-B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki/Binary_search_tree) in which a node can have more than two children. There are two kinds of node in B-tree, internal nodes ,and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range, internal nodes may be joined or split. An example of B-tree appears in *Figure 1*.
+The B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki/Binary_search_tree) in which a node can have more than two children. There are two kinds of node in B-tree, internal nodes ,and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range, internal nodes may be joined or split. An example of B-tree appears in *Figure 1*.
 
 ![](B-trees.gif)
 
@@ -46,7 +46,7 @@ B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki
 
 The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The [B+ tree](https://en.wikipedia.org/wiki/B%2B_tree#Insertion) is one of the most famous variations of B-tree. The idea behind B+ tree is that internal nodes only contain keys, and an additional level which contains values is added at the bottom with linked leaves.
 
-LSM-tree is just like other search trees, maintain key-value pairs. It maintains data in two or more separate structures, each of which is optimized for its respective underlying storage medium; data is synchronized between the two structures efficiently, in batches. An example of LSM-tree appears in *Figure 2*.
+LSM-tree is just like other search trees, it contains key-value pairs. It maintains data in two or more separate structures, each of which is optimized for its respective underlying storage medium; data is synchronized between the two structures efficiently, in batches. An example of LSM-tree appears in *Figure 2*.
 
 ![](LSM_Tree.png)
 
