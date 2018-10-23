@@ -40,7 +40,7 @@ Generally speaking,  an data structure can optimize for at most two from read, w
 
 The B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki/Binary_search_tree) in which a node can have more than two children. There are two kinds of node in B-tree, internal nodes ,and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range, internal nodes may be joined or split. An example of B-tree appears in *Figure 1*.
 
-![](B-trees.gif)
+![Figure 1](B-trees.gif)
 
 > Figure 1. The root node is shown at the top of the tree, and in this case happens to contain a single pivot (20), indicating that records with key k where k ≤ 20 are stored in the first child, and records with key k where k > 20 are stored in the second child. The first child contains two pivot keys (11 and 15), indicating that records with key k where k ≤ 11 is stored in the first child, those with 11 < k ≤ 15 are stored in the second child, and those with k > 15 are stored in the third child. The leftmost leaf node contains four values (3, 5, and 7).
 
@@ -48,7 +48,7 @@ The term B-tree may refer to a specific design or a general class of designs. In
 
 LSM-tree is just like other search trees, it contains key-value pairs. It maintains data in two or more separate structures, each of which is optimized for its respective underlying storage medium; data is synchronized between the two structures efficiently, in batches. An example of LSM-tree appears in *Figure 2*.
 
-![](LSM_Tree.png)
+![Figure 2](LSM_Tree.png)
 
 > Figure 2. The LSM-tree contains \\(k\\) conponents. Data starts in \\(C_0\\), then gets merged into the \\(C_1\\). Eventually the \\(C_1\\) is merged into the \\(C_2\\), and so forth.
 
