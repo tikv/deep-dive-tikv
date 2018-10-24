@@ -46,11 +46,11 @@ The B-tree is a generalization of [binary search tree](https://en.wikipedia.org/
 
 The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The [B+ tree](https://en.wikipedia.org/wiki/B%2B_tree#Insertion) is one of the most famous variations of B-tree. The idea behind B+ tree is that internal nodes only contain keys, and an additional level which contains values is added at the bottom with linked leaves.
 
-LSM-tree is just like other search trees, it contains key-value pairs. It maintains data in two or more separate structures, each of which is optimized for its respective underlying storage medium; data is synchronized between the two structures efficiently, in batches. An example of LSM-tree appears in *Figure 2*.
+LSM-tree is just like other search trees, it contains key-value pairs. It maintains data in two or more separate components, each of which is optimized for its respective underlying storage medium; data is synchronized between the two components efficiently, in batches. An example of LSM-tree appears in *Figure 2*.
 
 ![Figure 2](LSM_Tree.png)
 
-> Figure 2. The LSM-tree contains \\(k\\) conponents. Data starts in \\(C_0\\), then gets merged into the \\(C_1\\). Eventually the \\(C_1\\) is merged into the \\(C_2\\), and so forth.
+> Figure 2. The LSM-tree contains \\(k\\) components. Data starts in \\(C_0\\), then gets merged into the \\(C_1\\). Eventually the \\(C_1\\) is merged into the \\(C_2\\), and so forth.
 
 LSM-tree performs `compaction` to merge several `SSTable`s into one new `SSTable` which contains only the live data from the input `SSTable`s. Compaction helps LSM-tree to recycle space and reduce read amplification. There are two kinds of `compaction strategy` which is `Size-Tiered compaction strategy` (STCS) and `Level-Based compaction strategy` (LBCS). The idea behind STCS is compacting small `SSTable`s into medium `SSTable`s when LSM-tree has enough small `SSTable`s and compacting medium `SSTable`s into large `SSTable`s when LSM-tree has enough medium `SSTable`s. The idea of LBCS is to organize data into levels and each level contains one sorted run. Once a level accumulates enough data, some of data at this level will be compacted to the higher level.
 
