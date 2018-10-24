@@ -1,4 +1,4 @@
-#distributed algorithm
+# Distributed Algorithms
 
 ## Two-Phase Commit
 
