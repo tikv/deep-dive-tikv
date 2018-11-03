@@ -104,7 +104,7 @@ on each of the levels.
 
 For the highest \\(level_i\\), the data size is \\(O(N)\\), so that it performs \\(O(logN/B)\\) disk reads. 
 
-For the previous \\(level_{i-1}\\), the data size is is \\(O(N/k)\\), so that it performs \\(O(log(N/(kB))\\) disk reads. 
+For the previous \\(level_{i-1}\\), the data size is \\(O(N/k)\\), so that it performs \\(O(log(N/(kB))\\) disk reads. 
 
 For \\(level_{i-2}\\), the data size is \\(O(N/k^2)\\), so that it performs \\(O(log(N/k^2B)\\) disk reads.
 
