@@ -40,7 +40,7 @@ Generally speaking, a data structure can optimize for at most two from read, wri
 
 ## Analysis
 
-The B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki/Binary_search_tree) in which a node can have more than two children. There are two kinds of node in B-tree, internal nodes ,and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range, internal nodes may be joined or split. An example of B-tree appears in *Figure 1*.
+The B-tree is a generalization of [binary search tree](https://en.wikipedia.org/wiki/Binary_search_tree) in which a node can have more than two children. There are two kinds of node in B-tree, internal nodes, and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range, internal nodes may be joined or split. An example of B-tree appears in *Figure 1*.
 
 ![Figure 1](B_tree.png)
 
