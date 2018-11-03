@@ -88,7 +88,7 @@ We can analyze the Level-based LSM-tree as follows. If the growth factor is \\(k
 $$
 Θ(log_kN/B)
 $$
-where \\(N\\) is the size of the database. In order to simplify the analysis, we assumes that database size is stable and grows slowly over time, so that the size of database will be nearly equal as the size of last level.
+where \\(N\\) is the size of the database. In order to simplify the analysis, we assume that database size is stable and grows slowly over time, so that the size of database will be nearly equal as the size of last level.
 
 #### Write Amplification
 
