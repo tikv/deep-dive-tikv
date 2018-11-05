@@ -6,7 +6,7 @@ The [B-tree](https://en.wikipedia.org/wiki/B-tree) and the [Log-Structured Merge
 
 In general, there are three critical metrics to measure the performance of a data structure, which include write amplification, read amplification, and space amplification. This section aims to describe these metrics. 
 
-For hard disk drives (HDDs), the cost of disk seek is enormous, so that the performance of random read/write is worse than that of sequential read/write. This article assumes that flash-based storage is used so we can ignore the price of disk seeks.
+For hard disk drives (HDDs), the cost of disk seek is enormous, so that the performance of random read/write is worse than that of sequential read/write. This article assumes that flash-based storage is used so we can ignore the cost of disk seeks.
 
 ### Write Amplification
 
