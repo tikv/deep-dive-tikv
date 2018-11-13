@@ -48,7 +48,7 @@ The B-tree is a generalization of [binary search tree](https://en.wikipedia.org/
 
 The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The [B+ tree](https://en.wikipedia.org/wiki/B%2B_tree#Insertion) is one of the most famous variations of B-tree. The idea behind B+ tree is that internal nodes only contain keys, and an additional level which contains values is added at the bottom with linked leaves.
 
-LSM-tree is just like other search trees, it contains key-value pairs. It maintains data in two or more separate components, each of which is optimized for its respective underlying storage medium; the data i n the low level component is efficiently merged with the data in the high level component in batches. An example of LSM-tree appears in *Figure 2*.
+LSM-tree is just like other search trees, it contains key-value pairs. It maintains data in two or more separate components, each of which is optimized for its respective underlying storage medium; the data in the low level component is efficiently merged with the data in the high level component in batches. An example of LSM-tree appears in *Figure 2*.
 
 ![Figure 2](LSM_Tree.png)
 
