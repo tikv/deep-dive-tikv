@@ -15,5 +15,18 @@ before_script:
 
 script:
   - mdbook build
-  # See if there are changes (which means it needs to be rebuilt by the committer.)
-  - git diff-index --quiet HEAD -- || echo "Please run 'mdbook build' before pushing."
+
+branches:
+  only:
+    - master
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  local_dir: book
+  github_token: $GITHUB_TOKEN # Set in travis-ci.org dashboard
+  on:
+    branch: master
+  repo: tikv/deep-dive-tikv
+  target_branch: gh-pages
+  # fqdn: (We don't use this yet)
