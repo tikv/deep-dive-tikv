@@ -13,9 +13,9 @@ some special features more or less to let you take good use of it too.
 Choosing a key value engine is the first step to build a
 database. Here are some important things we need to consider:
 
-- The data storage model. Different models are optimized for different
-  workloads. Some are good for reads and some are good for writes,
-  etc.
+- The data structure. Different data structures are optimized for
+  different workloads. Some are good for reads and some are good for
+  writes, etc.
 - Maturity. We don't need a storage engine to be fancy but we want it
   to be reliable. Buggy engines ruin everything you build on top of
   them. We recommend using a battle-tested storage engine which has
@@ -26,4 +26,4 @@ database. Here are some important things we need to consider:
   with the database.
 
 In this chapter, we will do a comparison between two well-known data
-storage models and guide you through the storage engine used in TiKV.
+structures and guide you through the storage engine used in TiKV.
