@@ -32,10 +32,12 @@ inside a dataset, which can tell you if a key *probably* exists or
 dataset. Sometimes Bloom Filter gives you a false-positive answer
 although it rarely happens.
 
-TiKV uses a Bloom Filter as well as a variant which is called Prefix Bloom
-Filter (PBF). Instead of telling you if a whole key exists in a
+TiKV uses a Bloom Filter as well as a variant which is called Prefix
+Bloom Filter (PBF). Instead of telling you if a whole key exists in a
 dataset or not, PBF tells you if there are some other keys with the
-same prefix exists.
+same prefix exists. Since PBF only stores the unique prefixes instead
+of all unique whole keys, it can save some memory too with the down
+side of having larger false positive rate.
 
 TiKV supports MVCC, which means that there can be multiple versions
 for the same row stored in RocksDB. All versions of the same row share
