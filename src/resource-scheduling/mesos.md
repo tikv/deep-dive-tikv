@@ -27,15 +27,15 @@ Mesos consists of a master process that manages slave daemons running on each cl
 
 - Mesos master
 
-The _master_ sees the global information, and is responsible for resource scheduling and logical control between different _frameworks_. The _frameworks_ need to be registered to _master_ in order to be used. It uses Zookeeper to achieve HA.
+    The _master_ sees the global information, and is responsible for resource scheduling and logical control between different _frameworks_. The _frameworks_ need to be registered to _master_ in order to be used. It uses Zookeeper to achieve HA.
 
 - Mesos salve
 
-The _slave_ is responsible for reporting the resource status (idle resources, running status, etc.) on the slave node to _master_, and is responsible for isolating the local resources to perform the specific tasks assigned by master.
+    The _slave_ is responsible for reporting the resource status (idle resources, running status, etc.) on the slave node to _master_, and is responsible for isolating the local resources to perform the specific tasks assigned by master.
 
 - Frameworks
 
-Each _framework_ consists of two components: a _scheduler_ that registers with the _master_ to be offered resources, and an _executor_ process that is launched on _slave_ nodes to run the _framework_’s tasks.
+    Each _framework_ consists of two components: a _scheduler_ that registers with the _master_ to be offered resources, and an _executor_ process that is launched on _slave_ nodes to run the _framework_’s tasks.
 
 ## Resource scheduling
 To support the sophisticated schedulers of today's frameworks, Mesos introduces a distributed two-level scheduling mechanism called _resource offers_.
