@@ -11,7 +11,7 @@ Mesos has many compelling features, including:
 - Support for large scale scenarios with tens of thousands of nodes (adopted by Apple, Twitter, eBay, etc.)
 - Support for multiple application frameworks, including Marathon, Singularity, Aurora, etc.
 - High Available (rely on ZooKeeper)
-- Supports Docker, LXC and other container techniques
+- Support for Docker, LXC and other container techniques
 - Provides API for several popular languages, including Python, Java, C++, etc.
 - Comes with a simple and easy-to-use WebUI
 
