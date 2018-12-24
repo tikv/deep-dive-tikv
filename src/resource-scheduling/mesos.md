@@ -17,7 +17,7 @@ Mesos has many compelling features, including:
 
 ## Architecture
 
-It is important to notice that Mesos itself is a resource scheduling framework. It is not a complete application management platform, so Mesos can't work only on its own. However, based on Mesos, it is relatively easy to provide distributed operation capabilities for various application management frameworks or middleware platforms. Multiple frameworks can also run in a single Mesos cluster at the same time, improving overall resource utilization efficiency.
+It is important to notice that Mesos itself is only a resource scheduling framework. It is not a complete application management platform, so Mesos can't work only on its own. However, based on Mesos, it is relatively easy to provide distributed operation capabilities for various application management frameworks or middleware platforms. Multiple frameworks can also run in a single Mesos cluster at the same time, improving overall resource utilization efficiency.
 
 ![Figure 1](mesos-architecture.png)
 
