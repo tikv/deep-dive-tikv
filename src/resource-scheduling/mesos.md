@@ -13,7 +13,7 @@ Mesos has many compelling features, including:
 - High Availability (relies on ZooKeeper)
 - Support for Docker, LXC and other container techniques
 - Provides API for several popular languages, including Python, Java, C++, etc.
-- Comes with a simple and easy-to-use WebUI
+- A simple and easy-to-use WebUI
 
 ## Architecture
 
