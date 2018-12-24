@@ -14,7 +14,7 @@ The scheduling process is mainly divided into 2 steps. In the _predicate_ step, 
 
 ### Predicate stage
 
-Kubernetes scheduler provides some predicates algorithms by default. For instance, the `HostNamePred` predicate checks if the hostname matches the requested hostname; the `PodsFitsResourcePred` checks if a node has sufficient resources, such as CPU, memory, GPU, opaque int resources and so on, to run a pod. Relevant code can be found in [kubernetes/pkg/scheduler/algorithm/predicates/](https://github.com/kubernetes/kubernetes/tree/master/pkg/scheduler/algorithm/predicates).
+The scheduler provides some predicates algorithms by default. For instance, the `HostNamePred` predicate checks if the hostname matches the requested hostname; the `PodsFitsResourcePred` checks if a node has sufficient resources, such as CPU, memory, GPU, opaque int resources and so on, to run a pod. Relevant code can be found in [kubernetes/pkg/scheduler/algorithm/predicates/](https://github.com/kubernetes/kubernetes/tree/master/pkg/scheduler/algorithm/predicates).
 
 ### Priority stage
 
