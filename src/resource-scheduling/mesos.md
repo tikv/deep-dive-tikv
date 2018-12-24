@@ -9,7 +9,7 @@ Mesos can abstract and schedule the resources of the entire data center (includi
 Mesos has many compelling features, including:
 
 - Support for large scale scenarios with tens of thousands of nodes (adopted by Apple, Twitter, eBay, etc.)
-- Supports multiple application frameworks, including Marathon, Singularity, Aurora, etc.
+- Support for multiple application frameworks, including Marathon, Singularity, Aurora, etc.
 - High Available (rely on ZooKeeper)
 - Supports Docker, LXC and other container techniques
 - Provides API for several popular languages, including Python, Java, C++, etc.
