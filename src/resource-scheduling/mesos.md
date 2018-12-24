@@ -12,7 +12,7 @@ Mesos has many compelling features, including:
 - Support for multiple application frameworks, including Marathon, Singularity, Aurora, etc.
 - High Availability (relies on ZooKeeper)
 - Support for Docker, LXC and other container techniques
-- Provides API for several popular languages, including Python, Java, C++, etc.
+- Providing APIs for several popular languages, including Python, Java, C++, etc.
 - A simple and easy-to-use WebUI
 
 ## Architecture
