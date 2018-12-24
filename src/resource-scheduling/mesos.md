@@ -4,7 +4,7 @@
 
 Mesos was originally launched by UC Berkeley's AMPLab in 2009. It is lisenced under Apache and now operated by Mesosphere, Inc.
 
-Mesos can abstract and schedule the resources of the entire data center (including CPU, memory, storage, network, etc.), so that multiple applications can run in the cluster at the same time, and do not need to care about the physical distribution of resources.
+Mesos can abstract and schedule the resources of the entire data center (including CPU, memory, storage, network, etc.). This allows multiple applications to run in a cluster at the same time without needing to care about the physical distribution of resources.
 
 Mesos has many compelling features, including:
 
