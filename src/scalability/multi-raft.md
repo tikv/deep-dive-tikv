@@ -6,12 +6,12 @@ TiKV also can perform split or merge on Regions to make the partitions more flex
 
 [multi-raft](https://upload-images.jianshu.io/upload_images/542677-9fb5f3942a7d3d67.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-For each Raft group, the process of the algorithm is still as before, we only introduce a layer on top of Raft to manage these Raft consensus groups as a whole.
+For each Raft group, the process of the algorithm is still as before, and we only introduce a layer on top of Raft to manage these Raft consensus groups as a whole.
 
-TiKV uses an event loop to drive all the processes in a batch manner. It polls all the Raft groups to drive the Raft state machine every 1000ms and accepts the requests from the outside clients and Raft messages sent by other nodes through the notify mechanism of the event loop.
+TiKV uses an event loop to drive all the processes in a batch manner. It polls all the Raft groups to drive the Raft state machine every 1000ms and accepts the requests from the outside clients and Raft messages sent by other nodes through the notification mechanism of the event loop.
 
-For each event loop tick, it handles the raft ready of each Raft group:
+For each event loop tick, it handles the Raft ready of each Raft group:
 
-1. It traverses all the ready groups and uses a RocksDB's `WriteBatch` to handle all append data and persist the corresponding result at the same time.
-2. If `WriteBatch` succeeds, it then sends messages of every Raft groups to corresponding Followers. TiKV reuses the connection between two nodes for multiple Raft groups.
+1. It traverses all the ready groups and uses a RocksDB's `WriteBatch` to handle all appending data and persist the corresponding result at the same time.
+2. If `WriteBatch` succeeds, it then sends messages of every Raft group to corresponding Followers. TiKV reuses the connection between two nodes for multiple Raft groups.
 3. Then it applies any committed entries and executes them.

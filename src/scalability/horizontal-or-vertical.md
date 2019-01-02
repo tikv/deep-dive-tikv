@@ -8,7 +8,7 @@ Horizontal scaling, which is also known as scaling out, means to add more machin
 
 ## Vertical Scaling
 
-Vertical scaling, which is also known as scaling up, means to add resources to a single node in a system, typically involving the addition of CPUs or memory to a more powerful single computer. Such vertical scaling of existing systems also enables them to use virtualization technology more effectively, as it provides more resources for the hosted set of operating system and application modules to share. 
+Vertical scaling, which is also known as scaling up, means adding resources to a single node in a system, typically involving the addition of CPUs or memory to a more powerful single computer. Such vertical scaling of existing systems also enables them to use virtualization technology more effectively, as it provides more resources for the hosted set of the operating system and application modules to share. 
 
 ## Tradeoff
 
