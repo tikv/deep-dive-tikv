@@ -4,7 +4,7 @@ Methods of adding more resources for a particular application fall into two broa
 
 ## Horizontal Scaling
 
-Horizontal scaling, which is also known as scaling out, means to add more machines to a system and distribute the load across multiple smaller machines. As computer prices have dropped and performance continues to increase, high-performance computing applications have adopted low-cost commodity systems for tasks. System architects may configure hundreds of small computers in a cluster to obtain aggregate computing power that often exceeds that of computers based on a single traditional processor. The development of high-performance interconnects such as [Gigabit Ethernet](https://en.wikipedia.org/wiki/Gigabit_Ethernet), [InfiniBand](https://en.wikipedia.org/wiki/InfiniBand) further fueled this model. 
+Horizontal scaling, which is also known as scaling out, means adding more machines to a system and distributing the load across multiple smaller machines. As computer prices have dropped and performance continues to increase, high-performance computing applications have adopted low-cost commodity systems for tasks. System architects may configure hundreds of small computers in a cluster to obtain aggregate computing power that often exceeds that of computers based on a single traditional processor. The development of high-performance interconnects such as [Gigabit Ethernet](https://en.wikipedia.org/wiki/Gigabit_Ethernet), [InfiniBand](https://en.wikipedia.org/wiki/InfiniBand) further fueled this model. 
 
 ## Vertical Scaling
 
