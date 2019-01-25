@@ -17,3 +17,4 @@
 * [Resource Scheduling](resource-scheduling/introduction.md)
     + [Scheduler of Kubernetes](resource-scheduling/scheduler-of-kubernetes.md)
     + [Mesos](resource-scheduling/mesos.md)
+* [Distributed SQL over TiKV](distributed-sql/introduction.md)
