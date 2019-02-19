@@ -15,3 +15,7 @@
     + [Pessimistic & Optimistic Locking](distributed-transaction/pessimistic-and-optimistic-locking.md)
     + [Timestamp Oracle](distributed-transaction/timestamp-oracle.md)
     + [Percolator](distributed-transaction/distributed-algorithms.md)
+* [Resource Scheduling](resource-scheduling/introduction.md)
+    + [Scheduler of Kubernetes](resource-scheduling/scheduler-of-kubernetes.md)
+    + [Mesos](resource-scheduling/mesos.md)
+* [Distributed SQL over TiKV](distributed-sql/introduction.md)
