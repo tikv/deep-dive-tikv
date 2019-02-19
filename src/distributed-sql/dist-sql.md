@@ -1,6 +1,6 @@
 # Distributed SQL 
 
-Now we already know how the TiDB relational structure are encoded into the Key-Value form with versions.  In this section, we will focus on the following questions:
+By now we already know how [TiDB]'s relational structure is encoded into the Key-Value form with version.  In this section, we will focus on the following questions:
 
 * What happens when [TiDB] receives a SQL query?
 * How does [TiDB] excute SQL queries in a distributed way?
@@ -16,62 +16,62 @@ Firstly, let's have a look at the following example:
 ![Figure 1](images/select_from_tidb.png)
 
 
-As the above figure describes, when [TiDB] receives a SQL query from the client, it will process according the following steps:
+As described in the above figure, when [TiDB] receives a SQL query from the client, it will process with the following steps:
 
 1. [TiDB] receives a new SQL from the client.
-2. [TiDB] prepares the process plans for this request, meanRegionswhile [TiDB] get a timestamp from [PD] as the transaction's `start_ts`.
-3. [TiDB] tries to get information schema(meta data of the table) from TiKV.
-4. [TiDB] prepares the related Regions for each related key according the infomation schema and SQL.Then [TiDB] will get the related Regions' information from [PD].
-5. [TiDB] groups the related keys by region.
-6. [TiDB] dispatches the tasks into the related TiKV concurrently.
-7. [TiDB] reassembles the data and returns to the client.
+2. [TiDB] prepares the processing plans for this request, meanwhile [TiDB] gets a timestamp from [PD] as the `start_ts` of this transaction.
+3. [TiDB] tries to get the information schema (metadata of the table) from TiKV.
+4. [TiDB] prepares Regions for each related key according to the information schema and the SQL query. Then [TiDB] gets information for the related Regions from [PD].
+5. [TiDB] groups the related keys by Region.
+6. [TiDB] dispatches the tasks to the related TiKV concurrently.
+7. [TiDB] reassembles the data and returns the data to the client.
 
 ##  How does [TiDB] excute SQL queries in a distributed way?
 
-In short, [TiDB] will split the task by Regions and send them to TiKV concurrently.
+In short, [TiDB] splits the task by Regions and sends them to TiKV concurrently.
 
-For the above example, we assume the rows with primary key of the table `t` is distributed in three Regions:
+For the above example, we assume the rows with the primary key of table `t` are distributed in three Regions:
 
-* Rows with primary key in [0,100) are in region 1.
+* Rows with the primary key in [0,100) are in Region 1.
 * Rows with primary key in [100,1000) are in region 2.
 * Rows with primary key in [1000,~) are in region 3.
 
-Then we can just do `count` and sum the result from the above three Regions.
+Now we can do `count` and sum the result from the above three Regions.
 
 ![Figure 2](images/coprocessor_select.png)
 
 ### Exectors
 
-Now we know [TiDB] will split the read task according to the Regions. Then how do the TiKV know what task should it do?
-Here [TiDB] will send TiKV a DAG (Directed Acyclic Graph) with each node is an executor.
+Now we know [TiDB] splits a read task by Regions, but how does TiKV know what are its tasks to handle?
+Here [TiDB] will send a Directed Acyclic Graph (DAG) to TiKV with each node as an executor.
 
 ![Figure 3](images/executors.jpg)
 
 Supported executors:
 
-* TableScan: It will scan the rows with the primary key from the KV store.
+* TableScan: Scans the rows with the primary key from the KV store.
 * IndexScan: It will scan the index data from the KV store.
-* Selection: It will do filter(mostly for `where`), and the input is always from `TableScan` or `IndexScan`.
-* Aggregation: It will do aggregation(e.g. `count(*)`,`sum(xxx)`), and the input could be one of `TableScan`,`IndexScan`,`Selection`.
-* TopN: It will order the data and return the top n like `order by xxx limit 10`, and the input could be one of  `TableScan`,`IndexScan`,`Selection`.
+* Selection: performs a filter (mostly for `where`). The input is `TableScan` or `IndexScan`.
+* Aggregation: performs an aggregation (e.g. `count(*)`,`sum(xxx)`). The input is `TableScan`,`IndexScan`, or`Selection`.
+* TopN: sorts the data and returns the top n matches, for example, `order by xxx limit 10`. The input is `TableScan`,`IndexScan`, or`Selection`.
 
 ![executors-example](images/executors-example.jpg)
 
-For the above example, we have the following executors on region 1:
+For the above example, we have the following executors on Region 1:
 
 *  Aggregation: `count(*)`.
-*  Selection: a + b > 5
-*  TableScan: range:[0,100).
+*  Selection: `a + b > 5`
+*  TableScan: `range:[0,100)`.
 
 
 ### Expression
 
-We have executors as nodes in the Directed Acyclic Graph, then how to discribe the columns, constants and functions in the `Aggregation` or `Selection`? 
-There are three types of Expressions:
+We have executors as nodes in the DAG, but how do we describe columns, constants, and functions in an `Aggregation` or a `Selection`? 
+There are three types of expressions:
 
-* Column: which means a column in the table.
-* Constant: which means a constant, it could be string,int,duration, and so on.
-* Scalar function: which describe a function.
+* Column: a column in the table.
+* Constant: a constant, which could be a string, int, duration, and so on.
+* Scalar function: describes a function.
 
 
 
@@ -79,7 +79,7 @@ There are three types of Expressions:
 
 For the above example `select count(*) from t where a + b > 5`, we have:
 
-* Column: a,b.
+* Column: a, b.
 * Scalar functions: `+`,`>`.
 * Constant: `5`.
 
