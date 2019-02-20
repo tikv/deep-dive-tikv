@@ -43,6 +43,7 @@ waste a lot of time.
 ### Architecture
 
 The basic architecture of PD Simulator is shown in *Figure 1*.
+
 ![Figure 1](pd-simulator.png)
 
 ### Components
@@ -62,8 +63,8 @@ PD Simulator is consist of the following components:
 
 - Raft Engine
 
-  _Raft Engine_ records all Raft related information. It is a share Raft engine,
-  which PD can't know about it.
+  _Raft Engine_ records all Raft related information. It is a shared Raft
+  engine, which PD can't know about it.
 
 - Event Runner
 
@@ -74,8 +75,8 @@ PD Simulator is consist of the following components:
 
 The basic process about how PD Simulator works is as follows
 
-1. Once starting PD Simulator, it will create a driver and initialize a mocking
-TiKV cluster which is consist of nodes.
+1. When starting PD Simulator, it will create a driver and initialize a mocked
+TiKV cluster which consists of nodes.
 2. After PD is bootstrapped, it will start to run a timer.
 3. For each tick, the mocking TiKV cluster will execute some operations, such as
 executing Raft commands on the shared Raft engine or sending the heartbeat. And
@@ -83,4 +84,4 @@ according to the different cases, it will perform the different events.
 4. Finally, it will verify if the result is in line with our expectations.
 
 PD Simulator doesn't care about how TiKV actually works in details. It just
-needs to send the messages which PD want to know about.
+needs to send the messages which PD wants to know about.
