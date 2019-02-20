@@ -1,4 +1,4 @@
-# Data sharding
+# Data Sharding
 
 ## What is the partition
 

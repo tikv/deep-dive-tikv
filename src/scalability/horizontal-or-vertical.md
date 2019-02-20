@@ -1,4 +1,4 @@
-# Horizontal or vertical
+# Horizontal or Vertical
 
 Methods of adding more resources for a particular application fall into two broad categories: horizontal and vertical scaling.
 
