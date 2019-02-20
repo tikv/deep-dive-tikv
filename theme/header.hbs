@@ -6,3 +6,10 @@
 <!-- To automatically render math in text elements, include the auto-render extension: -->
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js" integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"
     onload="renderMathInElement(document.body);"></script>
+
+<!-- Redirect to the overview page if on home, otherwise the image won't work on one of the following: local index, prod index, prod chapter -->
+<script defer>
+    if (window.location.pathname == "/deep-dive-tikv/" || window.location.pathname == "/") {
+        window.location.replace("overview/introduction.html");
+    }
+</script>
