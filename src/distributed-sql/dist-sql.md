@@ -3,14 +3,14 @@
 By now we already know how [TiDB]'s relational structure is encoded into the Key-Value form with version.  In this section, we will focus on the following questions:
 
 * What happens when [TiDB] receives a SQL query?
-* How does [TiDB] excute SQL queries in a distributed way?
+* How does [TiDB] execute SQL queries in a distributed way?
   
 ## What happens when [TiDB] receives a SQL query?
 
 Firstly, let's have a look at the following example:
 
 ```
-   select count(*) from t where a + b  > 5;
+select count(*) from t where a + b  > 5;
 ```
 
 ![Figure 1](images/select_from_tidb.png)
@@ -26,7 +26,7 @@ As described in the above figure, when [TiDB] receives a SQL query from the clie
 6. [TiDB] dispatches the tasks to the related TiKV concurrently.
 7. [TiDB] reassembles the data and returns the data to the client.
 
-##  How does [TiDB] excute SQL queries in a distributed way?
+##  How does [TiDB] execute SQL queries in a distributed way?
 
 In short, [TiDB] splits the task by Regions and sends them to TiKV concurrently.
 
