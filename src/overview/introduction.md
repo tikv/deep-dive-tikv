@@ -35,3 +35,10 @@ All the network communications are through [gRPC](https://grpc.io/) so that cont
 The whole cluster is managed and scheduled by a central service &mdash; [Placement Driver(PD)](https://github.com/pingcap/pd).
 
 As you can see, the hierarchy of TiKV is clear and easy to understand, and we will give more detailed explanation later.
+
+<!-- Redirect to the overview page if on home, otherwise the image won't work on one of the following: local index, prod index, prod chapter -->
+<script>
+    if (window.location.pathname == "/deep-dive-tikv/" || window.location.pathname == "/") {
+        window.location.replace("overview/introduction.html");
+    }
+</script>
