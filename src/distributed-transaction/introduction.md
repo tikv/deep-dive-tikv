@@ -1,6 +1,6 @@
 # Introduction
 
-As TiKV is a distributed transactional key-value database, transactions are a core feature of TiKV. In this chapter we will talk about general implementations of distributed transaction and some implementation details in TiKV.
+As TiKV is a distributed transactional key-value database, transaction is a core feature of TiKV. In this chapter we will talk about general implementations of distributed transaction and some implementation details in TiKV.
 
 A database transaction, by definition, must be atomic, consistent, isolated and durable. Database practitioners often refer to these properties of database transactions using the acronym ACID.
 
