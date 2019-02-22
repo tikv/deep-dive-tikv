@@ -1,10 +1,10 @@
 # Percolator
 
-TiKV supports distributed transaction, which is inspired by Google's parer about *Percolator*. We will introduce it and how we make use of it in TiKV in this section.
+TiKV supports distributed transaction, which is inspired by Google's paper about *Percolator*. We will introduce it and how we make use of it in TiKV in this section.
 
 ## What is Percolator?
 
-*Percolator* is a system used for incremental processing on very large data set, built by Google. Support for distributed transactions is only a part of it. We will introduce Percolator briefly here. You can view the full paper [here](https://ai.google/research/pubs/pub36726#), and if you are very familiar to this parer, you can skip this section and go to read [Percolator in TiKV](#Percolator-in-TiKV)
+*Percolator* is a system used for incremental processing on very large data set, built by Google. Support for distributed transactions is only a part of it. We will introduce Percolator briefly here. You can view the full paper [here](https://ai.google/research/pubs/pub36726#), and if you are very familiar to this paper, you can skip this section and go to read [Percolator in TiKV](#Percolator-in-TiKV)
 
 Percolator is built based on Google's BigTable. BigTable is a distributed storage system that supports single-row transactions, based on which Percolator implements distributed transactions in ACID snapshot-isolation semantics. A column `c` of Percolator is actually divided into following 5 internal columns of BigTable:
 
@@ -16,7 +16,7 @@ Percolator is built based on Google's BigTable. BigTable is a distributed storag
 
 `c:notify` and `c:ack_O` are used for Percolator's incremental processing. They are not used by TiKV, so let's ignore these two columns and consider only the first three columns.
 
-Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produces timestamps in strictly increasing order. All read and write operations needs to apply for timestamps from the timestamp oracle, and a timestamp came from timestamp oracle will be regarded as the logical time when the read/write operation happens.
+Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produces timestamps in strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp came from timestamp oracle will be regarded as the logical time when the read/write operation happens.
 
 Percolator is multi-version, and a data item's version is represented by the timestamp that the transaction was committed.
 
@@ -42,16 +42,16 @@ It means that for the key `k1`, a value `"value1"` was committed at timestamp `1
 
 ### Writing
 
-Percolator's transactions are committed by a 2PC algorithm. Its two phases are called `Prewrite` and `Commit`. 
+Percolator's transactions are committed by a 2PC algorithm. Its two phases are called `Prewrite` and `Commit`.
 
 In `Prewrite` phase:
 1. We get a timestamp from the timestamp oracle, and we call the timestamp the transaction's `start_ts`.
-2. For each rows involved in the transaction, put a lock to `lock` column. At the same time, put the value to the `data` column with the timestamp `start_ts`. One of these locks will be chose as the *primary* lock, and others are *secondary* locks. Each lock saves the transaction's `start_ts`. The secondary locks, in addition, saves the primary lock's location.
+2. For each row involved in the transaction, put a lock to `lock` column. At the same time, put the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, and others are *secondary* locks. Each lock save the transaction's `start_ts`. The secondary locks, in addition, saves the primary lock's location.
     * If we found that there's already a lock or newer version than `start_ts`, the current transaction will be rolled back.
 
 And then, in `Commit` phase:
 1. Get another timestamp, namely `commit_ts`.
-2. Remove the primary lock, and at the same time write a record to `write` column with the timestamp `commit_ts`, and it's value records that the transaction's `start_ts`.
+2. Remove the primary lock, and at the same time write a record to `write` column with the timestamp `commit_ts`, and its value records the transaction's `start_ts`.
     * If the lock is missing, the commit should fail.
 3. For all secondaries, do the same thing.
 
