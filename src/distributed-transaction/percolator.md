@@ -6,15 +6,13 @@ TiKV supports distributed transaction, which is inspired by Google's paper about
 
 *Percolator* is a system used for incremental processing on very large data set, built by Google. Support for distributed transactions is only a part of it. We will introduce Percolator briefly here. You can view the full paper [here](https://ai.google/research/pubs/pub36726#), and if you are very familiar to this paper, you can skip this section and go to read [Percolator in TiKV](#Percolator-in-TiKV)
 
-Percolator is built based on Google's BigTable. BigTable is a distributed storage system that supports single-row transactions, based on which Percolator implements distributed transactions in ACID snapshot-isolation semantics. A column `c` of Percolator is actually divided into following 5 internal columns of BigTable:
+Percolator is built based on Google's BigTable. BigTable is a distributed storage system that supports single-row transactions, based on which Percolator implements distributed transactions in ACID snapshot-isolation semantics. A column `c` of Percolator is actually divided into following internal columns of BigTable:
 
 * `c:lock`
 * `c:write`
 * `c:data`
 * `c:notify`
 * `c:ack_O`
-
-`c:notify` and `c:ack_O` are used for Percolator's incremental processing. They are not used by TiKV, so let's ignore these two columns and consider only the first three columns.
 
 Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produces timestamps in strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp came from timestamp oracle will be regarded as the logical time when the read/write operation happens.
 
@@ -39,6 +37,10 @@ For example, in such a state:
 </table>
 
 It means that for the key `k1`, a value `"value1"` was committed at timestamp `12`. Then there is an uncommitted version whose value is `"value2"`, and it's uncommitted because there's a lock. You will understand why it looks like this after understanding how transactions works.
+
+The data of a certain row and a certain Percolator column is named a *cell*. The above example shows different versions of data of a single cell.
+
+The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incremental processing. After a modification, we set `c:notify` column to mark a cell to be dirty. There can be some *observers* which can does some user-specified operations when they finds data of their observed columns has changed. To find whether data is changed, they continuously scanning the `notify` columns to find dirty cells. `c:ack_O` is the "acknowledgement" column of the observer `O`, which is used to prevent a row from incorrectly being notified twice. It saves the timestamp of the observer's last execution.
 
 ### Writing
 
@@ -129,7 +131,7 @@ TiKV internally uses RocksDB, a key-value storage engine library, to persist dat
 
 RocksDB provides a features named *Column Family* (we will abbreviate it as *CF*). An instance of RocksDB may have multiple CFs, and each CF is a separated key namespace and has its own LSM-Tree. However different CFs in the same RocksDB instance uses a common WAL, providing the ability to write to different CFs atomically.
 
-We divide a RocksDB to three CFs: `CF_DEFAULT`, `CF_LOCK` and `CF_WRITE`, which corresponds to Percolator's `data` column, `lock` column and `write` column respectively. (there's an extra CF named `CF_RAFT` used to save some metadata of Raft, but that's out of our topic now.)
+We divide a RocksDB to three CFs: `CF_DEFAULT`, `CF_LOCK` and `CF_WRITE`, which corresponds to Percolator's `data` column, `lock` column and `write` column respectively. There's an extra CF named `CF_RAFT` used to save some metadata of Raft, but that's out of our topic now. The `notify` and `ack_O` columns are not present in TiKV, because for now TiKV doesn't need the ability of incremental processing.
 
 Then, we need to represent different versions of a key. We can simply compound a key and a timestamp as an internal key, and use the internal key in RocksDB. But since a key can have at most one lock at a time, so we don't need to add timestamp to the key in `CF_LOCK`. Then the contents of each CFs are:
 
