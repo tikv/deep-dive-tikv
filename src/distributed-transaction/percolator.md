@@ -48,7 +48,7 @@ Percolator's transactions are committed by a 2PC algorithm. Its two phases are c
 
 In `Prewrite` phase:
 1. We get a timestamp from the timestamp oracle, and we call the timestamp the transaction's `start_ts`.
-2. For each row involved in the transaction, put a lock to `lock` column. At the same time, put the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, and others are *secondary* locks. Each lock save the transaction's `start_ts`. The secondary locks, in addition, saves the primary lock's location.
+2. For each row involved in the transaction, put a lock to `lock` column. At the same time, put the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, and others are *secondary* locks. Each lock saves the transaction's `start_ts`. The secondary locks, in addition, save the primary lock's location.
     * If we found that there's already a lock or newer version than `start_ts`, the current transaction will be rolled back.
 
 And then, in `Commit` phase:
@@ -112,7 +112,7 @@ To roll back a row, just simply remove its lock and its corresponding value in `
 
 ### Tolerating crashes
 
-Percolator has the ability to surfer crushing without breaking correctness of data.
+Percolator has the ability to survive crashes without breaking correctness of data.
 
 First, let's see what will happen after a crash. A crash may happen during `Prewrite`, during `Commit` or between these two. But any way, we can simply divide these conditions into two types: before committing the primary, or after committing the primary.
 
@@ -121,7 +121,7 @@ So, when a transaction `T1` (either reading or writing) finds that a row `R1` ha
 * If the primary lock disappeared but there's a record `data @ T0.start_ts` in `write` column, it means that `T0` has been successfully committed. Then the row `R1`'s stale lock can also be committed. Usually we call this `rolling forward`. After that, the new transaction `T1` can continue.
 * If the primary lock disappeared with nothing left, it means the transaction has been rolled back. Then the row `R1`'s stale lock should also be rolled back. Then `T1` can continue.
 * If the primary lock exists but it's too old (we can set a TTL to the lock), we can believe that the transaction crashed before committing or rolling back. We can rollback it and continue `T1`.
-* Other wise, we consider transaction `T0` is still running. Then `T1` can rollback it self, or another choice, try to wait for a while to see whether `T0` will be committed before `T1.start_ts`.
+* Otherwise, we consider transaction `T0` is still running. Then `T1` can rollback it self, or another choice, try to wait for a while to see whether `T0` will be committed before `T1.start_ts`.
 
 ## Percolator in TiKV
 
