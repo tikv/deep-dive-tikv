@@ -70,15 +70,18 @@ Then `Commit`:
 
 1. Get the `commit_ts`. We got `8`.
 2. Commit the primary: Remove the primary lock and put the commit record to `write` column. We get this:
-    | key | bal:data | bal:lock | bal:write |
-    |-----|----------|----------|-----------|
-    | Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
-    | Joe | 7:$9<br/>6:<br/>5:$2 | 7:primary@Bob.bal<br/>6:<br/>5: | 7:<br/>6:data@5<br/>5: |
+
+| key | bal:data | bal:lock | bal:write |
+|-----|----------|----------|-----------|
+| Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
+| Joe | 7:$9<br/>6:<br/>5:$2 | 7:primary@Bob.bal<br/>6:<br/>5: | 7:<br/>6:data@5<br/>5: |
+
 3. Commit all secondaries. Finally, we get this:
-    | key | bal:data | bal:lock | bal:write |
-    |-----|----------|----------|-----------|
-    | Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
-    | Joe | 8:<br/>7:$9<br/>6:<br/>5:$2 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
+
+| key | bal:data | bal:lock | bal:write |
+|-----|----------|----------|-----------|
+| Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
+| Joe | 8:<br/>7:$9<br/>6:<br/>5:$2 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
 
 ### Reading
 
