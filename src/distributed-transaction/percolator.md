@@ -20,21 +20,9 @@ Percolator is multi-version, and a data item's version is represented by the tim
 
 For example, in such a state:
 
-<table>
-  <tr>
-    <th>key</th><th>v:data</th><th>v:lock</th><th>v:write</th>
-  </tr>
-  <tr>
-    <td rowspan="3">k1</td>
-    <td>14: "value2"</td><td>14: primary</td><td></td>
-  </tr>
-  <tr>
-    <td></td><td></td><td>12: data@10</td>
-  </tr>
-  <tr>
-    <td>10: "value1"</td><td></td><td></td>
-  </tr>
-</table>
+| key | v:data | v:lock | v"write |
+|-----|--------|--------|---------|
+|k1   |14:"value2"<br/>12:<br/>10:"value1"|14:primary<br/>12:<br/>10:|14:<br/>12:data@10<br/>10:|
 
 It means that for the key `k1`, a value `"value1"` was committed at timestamp `12`. Then there is an uncommitted version whose value is `"value2"`, and it's uncommitted because there's a lock. You will understand why it looks like this after understanding how transactions work.
 
@@ -61,7 +49,10 @@ Once the step 2 (committing the primary) is done, we say the whole transaction i
 
 Let's see the example in the paper of Percolator. Assume we are writing two rows in a single transaction. At first, the data looks like this:
 
-![Figure 1](percolator-figure-1.png)
+| key | bal:data    | bal:lock  | bal:write       |
+|-----|-------------|-----------|-----------------|
+| Bob | 6:<br>5:$10 | 6:<br/>5: | 6:data@5<br/>5: |
+| Joe | 6:<br/>5:$2 | 6:<br/>5: | 6:data@5<br/>5: |
 
 This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe's account. First, we do `Prewrite`:
 
@@ -70,15 +61,24 @@ This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe'
 
 After `Prewrite`, our data looks like this:
 
-![Figure 2](percolator-figure-2.png)
+| key | bal:data | bal:lock | bal:write |
+|-----|----------|----------|-----------|
+| Bob | 7:$3<br/>6:<br>5:$10 | 7:primary<br/>6:<br/>5:         | 7:<br/>6:data@5<br/>5: |
+| Joe | 7:$9<br/>6:<br/>5:$2 | 7:primary@Bob.bal<br/>6:<br/>5: | 7:<br/>6:data@5<br/>5: |
 
 Then `Commit`:
 
 1. Get the `commit_ts`. We got `8`.
 2. Commit the primary: Remove the primary lock and put the commit record to `write` column. We get this:
-    ![Figure 3](percolator-figure-3.png)
+    | key | bal:data | bal:lock | bal:write |
+    |-----|----------|----------|-----------|
+    | Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
+    | Joe | 7:$9<br/>6:<br/>5:$2 | 7:primary@Bob.bal<br/>6:<br/>5: | 7:<br/>6:data@5<br/>5: |
 3. Commit all secondaries. Finally, we get this:
-    ![Figure 4](percolator-figure-4.png)
+    | key | bal:data | bal:lock | bal:write |
+    |-----|----------|----------|-----------|
+    | Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
+    | Joe | 8:<br/>7:$9<br/>6:<br/>5:$2 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
 
 ### Reading
 
@@ -90,9 +90,12 @@ To read from Percolator, a timestamp is required too. The procedure to perform r
 3. Get the latest record in the row's `write` column whose `commit_ts` is in range `[0, ts]`. The record contains the `start_ts` of the transaction where it was committed.
 4. Get the row's value in `data` column, whose timestamp is exactly `start_ts`. Then the value is what we want.
 
-For example, consider a table as shown in the image again:
+For example, consider this table again:
 
-![Figure 5](percolator-figure-3.png)
+| key | bal:data | bal:lock | bal:write |
+|-----|----------|----------|-----------|
+| Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: |8:data@7<br/>7:<br/>6:data@5<br/>5: |
+| Joe | 7:$9<br/>6:<br/>5:$2 | 7:primary@Bob.bal<br/>6:<br/>5: | 7:<br/>6:data@5<br/>5: |
 
 Let's read Bob's balance.
 1. Get a timestamp. Assume we got `9`.
