@@ -4,9 +4,9 @@ TiKV supports distributed transactions, which is inspired by Google's [Percolato
 
 ## What is Percolator?
 
-*Percolator* is a system used for incremental processing on very large data set, built by Google. Support for distributed transactions is only a part of it. We will introduce Percolator briefly here. You can view the full paper [here](https://ai.google/research/pubs/pub36726#), and if you are very familiar to this paper, you can skip this section and go to read [Percolator in TiKV](#Percolator-in-TiKV)
+*Percolator* is a system built by Google for incremental processing on a very large data set. Since this is just a brief introduction, you can view the full paper [here](https://ai.google/research/pubs/pub36726#) for more details. If you are already very familiar with it, you can skip this section and go directly to [Percolator in TiKV](#Percolator-in-TiKV)
 
-Percolator is built based on Google's BigTable. BigTable is a distributed storage system that supports single-row transactions, based on which Percolator implements distributed transactions in ACID snapshot-isolation semantics. A column `c` of Percolator is actually divided into following internal columns of BigTable:
+Percolator is built based on Google's BigTable, a distributed storage system that supports single-row transactions. With similar logic, Percolator implements distributed transactions in ACID snapshot-isolation semantics. A column `c` of Percolator is actually divided into the following internal columns of BigTable:
 
 * `c:lock`
 * `c:write`
@@ -14,7 +14,7 @@ Percolator is built based on Google's BigTable. BigTable is a distributed storag
 * `c:notify`
 * `c:ack_O`
 
-Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produce timestamps in strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp came from timestamp oracle will be regarded as the logical time when the read/write operation happens.
+Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produce timestamps in a strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp coming from the timestamp oracle will be regarded as the logical time when the read/write operation happens.
 
 Percolator is multi-version, and a data item's version is represented by the timestamp that the transaction was committed.
 
