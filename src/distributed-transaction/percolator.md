@@ -36,7 +36,7 @@ Percolator's transactions are committed by a 2-phase commit (2PC) algorithm. Its
 
 In `Prewrite` phase:
 1. Get a timestamp from the timestamp oracle, and we call the timestamp the transaction's `start_ts`.
-2. For each row involved in the transaction, put a lock in the `lock` column. At the same time, put the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, while others are *secondary* locks. Each lock contains the transaction's `start_ts`. Each secondary lock, in addition, contains the location of the primary lock.
+2. For each row involved in the transaction, put a lock in the `lock` column. At the same time, write the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, while others are *secondary* locks. Each lock contains the transaction's `start_ts`. Each secondary lock, in addition, contains the location of the primary lock.
     * If there's already a lock or newer version than `start_ts`, the current transaction will be rolled back.
 
 And then, in the`Commit` phase:
@@ -56,7 +56,7 @@ Let's see the example from the paper of Percolator. Assume we are writing two ro
 This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe's account. The first step is `Prewrite`:
 
 1. Get the `start_ts` of the transaction. In our example, it's `7`.
-2. For each row involved in this transaction, put a lock in the `lock` column, and put the data to the `data` column. One of the locks will be chosen as the primary lock.
+2. For each row involved in this transaction, put a lock in the `lock` column, and write the data to the `data` column. One of the locks will be chosen as the primary lock.
 
 After `Prewrite`, our data looks like this:
 
@@ -153,4 +153,4 @@ Our approach to compound user keys and timestamps together is:
 
 For example, key `"key1"` and timestamp `3` will be encoded as `"key1\x00\x00\x00\x00\xfb\xff\xff\xff\xff\xff\xff\xff\xfe"`, where the first 9 bytes is the memcomparable-encoded key and the remaining 8 bytes is the inverted timestamp in big-endian. In this way, different versions of the same key are always adjacent in RocksDB; and for each key, newer versions are always before older ones.
 
-There are some differences between TiKV and the Percolator's paper. In TiKV, records in `CF_WRITE` has four different types: `Put`, `Delete`, `Rollback` and `Lock`. Only `Put` records need a corresponding value in `CF_DEFAULT`. When rolling back transactions, we don't simply remove the lock but writes a `Rollback` record in `CF_WRITE`. Different from Percolator's lock，the `lock` type of write records in TiKV is produced by queries like `SELECT ... FOR UPDATE` in TiDB. For keys affected by this query,  they are not only the objects for read, but the reading is also part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.
+There are some differences between TiKV and the Percolator's paper. In TiKV, records in `CF_WRITE` has four different types: `Put`, `Delete`, `Rollback` and `Lock`. Only `Put` records need a corresponding value in `CF_DEFAULT`. When rolling back transactions, we don't simply remove the lock but writes a `Rollback` record in `CF_WRITE`. Different from Percolator's lock, the `Lock` type of write records in TiKV is produced by queries like `SELECT ... FOR UPDATE` in TiDB. For keys affected by this query,  they are not only the objects for read, but the reading is also part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.
