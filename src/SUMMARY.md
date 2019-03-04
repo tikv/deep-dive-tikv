@@ -14,7 +14,7 @@
     + [Distributed Algorithms](distributed-transaction/distributed-algorithms.md)
     + [Pessimistic & Optimistic Locking](distributed-transaction/pessimistic-and-optimistic-locking.md)
     + [Timestamp Oracle](distributed-transaction/timestamp-oracle.md)
-    + [Percolator](distributed-transaction/distributed-algorithms.md)
+    + [Percolator](distributed-transaction/percolator.md)
 * [Scalability](scalability/introduction.md)
     + [Horizontal or Vertical](scalability/horizontal-or-vertical.md)
     + [Data Sharding](scalability/data-sharding.md)
