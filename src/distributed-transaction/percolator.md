@@ -6,7 +6,7 @@ TiKV supports distributed transactions, which is inspired by Google's [Percolato
 
 *Percolator* is a system built by Google for incremental processing on a very large data set. Since this is just a brief introduction, you can view the full paper [here](https://ai.google/research/pubs/pub36726#) for more details. If you are already very familiar with it, you can skip this section and go directly to [Percolator in TiKV](#Percolator-in-TiKV)
 
-Percolator is built based on Google's BigTable, a distributed storage system that supports single-row transactions. With similar logic, Percolator implements distributed transactions in ACID snapshot-isolation semantics. A column `c` of Percolator is actually divided into the following internal columns of BigTable:
+Percolator is built based on Google's BigTable, a distributed storage system that supports single-row transactions. Percolator implements distributed transactions in ACID snapshot-isolation semantics, which is not supported by BigTable. A column `c` of Percolator is actually divided into the following internal columns of BigTable:
 
 * `c:lock`
 * `c:write`
@@ -28,7 +28,7 @@ The state in the table means that for key `k1`, value `"value1"` was committed a
 
 The data of a specific row and a specific Percolator column is named a *cell*. The above example shows different versions of data for a single cell.
 
-The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incremental processing. After a modification, `c:notify` column is used to mark the modified cell to be dirty. Users can add some *observers* to Percolator which can do user-specified operations when they find data of their observed columns has changed. To find whether data is changed, they continuously scan the `notify` columns to find dirty cells. `c:ack_O` is the "acknowledgment" column of observer `O`, which is used to prevent a row from being incorrectly notified twice. It saves the timestamp of the observer's last execution.
+The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incremental processing. After a modification, `c:notify` column is used to mark the modified cell to be dirty. Users can add some *observers* to Percolator which can do user-specified operations when they find data of their observed columns has changed. To find whether data is changed, the observers continuously scan the `notify` columns to find dirty cells. `c:ack_O` is the "acknowledgment" column of observer `O`, which is used to prevent a row from being incorrectly notified twice. It saves the timestamp of the observer's last execution.
 
 ### Writing
 
@@ -118,11 +118,11 @@ To roll back a row, just simply remove its lock and its corresponding value in `
 
 ### Tolerating crashes
 
-Percolator has the ability to survive crashes without breaking the correctness of data.
+Percolator has the ability to survive crashes without breaking data integrity.
 
 First, let's see what will happen after a crash. A crash may happen during `Prewrite`, `Commit` or between these two phases. We can simply divide these conditions into two types: before committing the primary, or after committing the primary.
 
-So, when a transaction `T1` (either reading or writing) finds that a row `R1` has a lock which belongs to an earlier transaction `T0`, T1 doesn't simply rollback itself immediately. Instead, it checks the state of the lock's primary.
+So, when a transaction `T1` (either reading or writing) finds that a row `R1` has a lock which belongs to an earlier transaction `T0`, `T1` doesn't simply rollback itself immediately. Instead, it checks the state of `T0`'s primary lock.
 
 * If the primary lock has disappeared and there's a record `data @ T0.start_ts` in the `write` column, it means that `T0` has been successfully committed. Then row `R1`'s stale lock can also be committed. Usually we call this `rolling forward`. After this, the new transaction `T1` resumes.
 * If the primary lock has disappeared with nothing left, it means the transaction has been rolled back. Then row `R1`'s stale lock should also be rolled back. After this, `T1` resumes.
@@ -153,4 +153,4 @@ Our approach to compound user keys and timestamps together is:
 
 For example, key `"key1"` and timestamp `3` will be encoded as `"key1\x00\x00\x00\x00\xfb\xff\xff\xff\xff\xff\xff\xff\xfe"`, where the first 9 bytes is the memcomparable-encoded key and the remaining 8 bytes is the inverted timestamp in big-endian. In this way, different versions of the same key are always adjacent in RocksDB; and for each key, newer versions are always before older ones.
 
-There are some differences between TiKV and the Percolator's paper. In TiKV, records in `CF_WRITE` has four different types: `Put`, `Delete`, `Rollback` and `Lock`. Only `Put` records need a corresponding value in `CF_DEFAULT`. When rolling back transactions, we don't simply remove the lock but writes a `Rollback` record in `CF_WRITE`. The `Lock` type of write records is different from Percolator's lock, but is produced by queries like `SELECT ... FOR UPDATE` in TiDB. For keys affected by this query, although they are only read, it's part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.
+There are some differences between TiKV and the Percolator's paper. In TiKV, records in `CF_WRITE` has four different types: `Put`, `Delete`, `Rollback` and `Lock`. Only `Put` records need a corresponding value in `CF_DEFAULT`. When rolling back transactions, we don't simply remove the lock but writes a `Rollback` record in `CF_WRITE`. The `Lock` type of write records is not related to Percolator's lock, but is produced by queries like `SELECT ... FOR UPDATE` in TiDB. For keys affected by this query,  they are not only the objects for read, but the reading is also part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.
