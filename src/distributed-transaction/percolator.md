@@ -16,7 +16,7 @@ Percolator is built based on Google's BigTable, a distributed storage system tha
 
 Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produce timestamps in a strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp coming from the timestamp oracle will be regarded as the logical time when the read/write operation happens.
 
-Percolator is multi-version, and a data item's version is represented by the timestamp that the transaction was committed.
+Percolator supports multi-version, and a data item's version is represented by the timestamp when the transaction was committed.
 
 For example, in such a state:
 
@@ -24,40 +24,40 @@ For example, in such a state:
 |-----|--------|--------|---------|
 |k1   |14:"value2"<br/>12:<br/>10:"value1"|14:primary<br/>12:<br/>10:|14:<br/>12:data@10<br/>10:|
 
-It means that for the key `k1`, a value `"value1"` was committed at timestamp `12`. Then there is an uncommitted version whose value is `"value2"`, and it's uncommitted because there's a lock. You will understand why it looks like this after understanding how transactions work.
+The state in the table means that for key `k1`, value `"value1"` was committed at timestamp `12`. Then there is an uncommitted version whose value is `"value2"`, and it's uncommitted because there's a lock. You will understand why it is like this after understanding how transactions work.
 
-The data of a certain row and a certain Percolator column is named a *cell*. The above example shows different versions of data of a single cell.
+The data of a specific row and a specific Percolator column is named a *cell*. The above example shows different versions of data for a single cell.
 
-The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incremental processing. After a modification, we set `c:notify` column to mark a cell to be dirty. There can be some *observers* which can do some user-specified operations when they find data of their observed columns have changed. To find whether data is changed, they continuously scanning the `notify` columns to find dirty cells. `c:ack_O` is the "acknowledgment" column of the observer `O`, which is used to prevent a row from incorrectly being notified twice. It saves the timestamp of the observer's last execution.
+The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incremental processing. After a modification, we set `c:notify` column to mark a cell to be dirty. Existing *observers*  will perform user-specified operations when they find data of their observed columns has changed. To find whether data is changed, they continuously scan the `notify` columns to find dirty cells. `c:ack_O` is the "acknowledgment" column of observer `O`, which is used to prevent a row from being incorrectly notified twice. It saves the timestamp of the observer's last execution.
 
 ### Writing
 
-Percolator's transactions are committed by a 2PC algorithm. Its two phases are called `Prewrite` and `Commit`.
+Percolator's transactions are committed by a 2-phase commit (2PC) algorithm. Its two phases are `Prewrite` and `Commit`.
 
 In `Prewrite` phase:
-1. We get a timestamp from the timestamp oracle, and we call the timestamp the transaction's `start_ts`.
-2. For each row involved in the transaction, put a lock to `lock` column. At the same time, put the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, and others are *secondary* locks. Each lock saves the transaction's `start_ts`. The secondary locks, in addition, save the primary lock's location.
-    * If we found that there's already a lock or newer version than `start_ts`, the current transaction will be rolled back.
+1. Get a timestamp from the timestamp oracle, and we call the timestamp the transaction's `start_ts`.
+2. For each row involved in the transaction, put a lock in the `lock` column. At the same time, assign the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, while others are *secondary* locks. Each lock contains the transaction's `start_ts`. Each secondary lock, in addition, contains the location of the primary lock.
+    * If there's already a lock or newer version than `start_ts`, the current transaction will be rolled back.
 
-And then, in `Commit` phase:
+And then, in the`Commit` phase:
 1. Get another timestamp, namely `commit_ts`.
-2. Remove the primary lock, and at the same time write a record to `write` column with the timestamp `commit_ts`, and its value records the transaction's `start_ts`.
-    * If the lock is missing, the commit should fail.
-3. For all secondaries, do the same thing.
+2. Remove the primary lock, and at the same time write a record to the `write` column with timestamp `commit_ts`, whose value records the transaction's `start_ts`.
+    * If the primary lock is missing, the commit should fail.
+3. Then for all secondary locks, repeat the process above.
 
-Once the step 2 (committing the primary) is done, we say the whole transaction is done. It doesn't matter if the process of committing the secondaries unexpectedly exited. When we meet a lock of other transactions, we can see whether its primary has been committed to determine whether the whole transaction has been committed.
+Once the step 2 (committing the primary) is done, we say the whole transaction is done. It doesn't matter if the process of committing the secondaries unexpectedly exited.
 
-Let's see the example in the paper of Percolator. Assume we are writing two rows in a single transaction. At first, the data looks like this:
+Let's see the example from the paper of Percolator. Assume we are writing two rows in a single transaction. At first, the data looks like this:
 
 | key | bal:data     | bal:lock  | bal:write       |
 |-----|--------------|-----------|-----------------|
 | Bob | 6:<br/>5:$10 | 6:<br/>5: | 6:data@5<br/>5: |
 | Joe | 6:<br/>5:$2  | 6:<br/>5: | 6:data@5<br/>5: |
 
-This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe's account. First, we do `Prewrite`:
+This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe's account. The first step is `Prewrite`:
 
-1. Get the `start_ts` of the transaction. We got `7` in this example.
-2. For each row involved in this transaction, put a lock in the `lock` column, and put the data to the `data` column. One of the locks will be chosen as the primary lock.
+1. Get the `start_ts` of the transaction. In our example, it's `7`.
+2. For each row involved in this transaction, put a lock in the `lock` column, and assign the data to the `data` column. One of the locks will be chosen as the primary lock.
 
 After `Prewrite`, our data looks like this:
 
@@ -68,15 +68,15 @@ After `Prewrite`, our data looks like this:
 
 Then `Commit`:
 
-1. Get the `commit_ts`. We got `8`.
-2. Commit the primary: Remove the primary lock and put the commit record to `write` column. We get this:
+1. Get the `commit_ts`, in our case, `8`.
+2. Commit the primary: Remove the primary lock and write the commit record to the `write` column. 
 
 | key | bal:data | bal:lock | bal:write |
 |-----|----------|----------|-----------|
 | Bob | 8:<br/>7:$3<br/>6:<br>5:$10 | 8:<br/>7:<br/>6:<br/>5: | 8:data@7<br/>7:<br/>6:data@5<br/>5: |
 | Joe | 7:$9<br/>6:<br/>5:$2 | 7:primary@Bob.bal<br/>6:<br/>5: | 7:<br/>6:data@5<br/>5: |
 
-3. Commit all secondaries. Finally, we get this:
+3. Commit all secondary locks to complete the writing process.
 
 | key | bal:data | bal:lock | bal:write |
 |-----|----------|----------|-----------|
@@ -85,7 +85,7 @@ Then `Commit`:
 
 ### Reading
 
-To read from Percolator, a timestamp is required too. The procedure to perform read operation is as following:
+Reading from Percolator also requires a timestamp. The procedure to perform a read operation is as follows:
 
 1. Get a timestamp, `ts`.
 2. Check if the row we are going to read is locked with a timestamp in the range `[0, ts]`;
@@ -131,7 +131,7 @@ So, when a transaction `T1` (either reading or writing) finds that a row `R1` ha
 
 ## Percolator in TiKV
 
-TiKV is a key-value storage, and each key-value pair can be regarded as a row in Percolator.
+TiKV is a distributed transactional key-value storage engine. Each key-value pair can be regarded as a row in Percolator.
 
 TiKV internally uses RocksDB, a key-value storage engine library, to persist data to disk. RocksDB's atomic write batch and TiKV's transaction scheduler make it atomic to read and write a single user key, which is a requirement of Percolator.
 
