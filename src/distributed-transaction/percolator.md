@@ -1,6 +1,6 @@
 # Percolator
 
-TiKV supports the distributed transaction, which is inspired by Google's paper about *Percolator*. We will introduce it and how we make use of it in TiKV in this section.
+TiKV supports distributed transactions, which is inspired by Google's [Percolator](https://ai.google/research/pubs/pub36726.pdf). In this section, we will briefly introduce Percolator and how we make use of it in TiKV.
 
 ## What is Percolator?
 
@@ -49,10 +49,10 @@ Once the step 2 (committing the primary) is done, we say the whole transaction i
 
 Let's see the example in the paper of Percolator. Assume we are writing two rows in a single transaction. At first, the data looks like this:
 
-| key | bal:data    | bal:lock  | bal:write       |
-|-----|-------------|-----------|-----------------|
-| Bob | 6:<br>5:$10 | 6:<br/>5: | 6:data@5<br/>5: |
-| Joe | 6:<br/>5:$2 | 6:<br/>5: | 6:data@5<br/>5: |
+| key | bal:data     | bal:lock  | bal:write       |
+|-----|--------------|-----------|-----------------|
+| Bob | 6:<br/>5:$10 | 6:<br/>5: | 6:data@5<br/>5: |
+| Joe | 6:<br/>5:$2  | 6:<br/>5: | 6:data@5<br/>5: |
 
 This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe's account. First, we do `Prewrite`:
 
