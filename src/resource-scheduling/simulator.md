@@ -2,10 +2,10 @@
 
 ## Overview
 
-The simulator plays an important role in the area of designing and studying
-computer architecture due to its flexibility and significant benefit of reducing
-the time and the cost. It is often used to validate specific design schemes and
-evaluate the effectiveness of design schemes.
+With its flexibility and significant benefits of reducing the time and the
+cost, the simulator plays an important role in studying and designing a
+computer architecture. It is often used to validate specific design schemes
+and evaluate the effectiveness of design schemes.
 
 ## Workflow
 
@@ -15,7 +15,7 @@ In general, when there is a lack of resources or the problem is hard to
 reproduce, we might consider using the simulator to make it.
 
 A simulation for the scheduling problem in the distributed system
-usually follows the following steps:
+usually consists of the following steps:
 
 1. Define the system model of the simulator.
 2. Set up the simulation environment.
