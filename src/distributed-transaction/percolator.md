@@ -24,9 +24,7 @@ For example,
 |-----|--------|--------|---------|
 |k1   |14:"value2"<br/>12:<br/>10:"value1"|14:primary<br/>12:<br/>10:|14:<br/>12:data@10<br/>10:|
 
-The state in the table means that for key `k1`, value `"value1"` was committed at timestamp `12`. Then there is an uncommitted version whose value is `"value2"`, and it's uncommitted because there's a lock. You will understand why it is like this after understanding how transactions work.
-
-The above example shows different versions of data for a single cell.
+The table shows different versions of data for a single cell. The state shown in the table means that for key `k1`, value `"value1"` was committed at timestamp `12`. Then there is an uncommitted version whose value is `"value2"`, and it's uncommitted because there's a lock. You will understand why it is like this after understanding how transactions work.
 
 The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incremental processing. After a modification, `c:notify` column is used to mark the modified cell to be dirty. Users can add some *observers* to Percolator which can do user-specified operations when they find data of their observed columns has changed. To find whether data is changed, the observers continuously scan the `notify` columns to find dirty cells. `c:ack_O` is the "acknowledgment" column of observer `O`, which is used to prevent a row from being incorrectly notified twice. It saves the timestamp of the observer's last execution.
 
@@ -68,7 +66,7 @@ After `Prewrite`, our data looks like this:
 Then `Commit`:
 
 1. Get the `commit_ts`, in our case, `8`.
-2. Commit the primary: Remove the primary lock and write the commit record to the `write` column. 
+2. Commit the primary: Remove the primary lock and write the commit record to the `write` column.
 
 | key | bal:data | bal:lock | bal:write |
 |-----|----------|----------|-----------|
@@ -88,7 +86,7 @@ Reading from Percolator also requires a timestamp. The procedure to perform a re
 
 1. Get a timestamp, `ts`.
 2. Check if the row we are going to read is locked with a timestamp in the range `[0, ts]`;
-    * If there is a timestamp in range `[0, ts]`, it means the row is locked by an earlier-started transaction. Then we are not sure whether that transaction will be committed before or after `ts`. 
+    * If there is a timestamp in range `[0, ts]`, it means the row is locked by an earlier-started transaction. Then we are not sure whether that transaction will be committed before or after `ts`.
     * If there is not such a timestamp, the read can continue.
 3. Get the latest record in the row's `write` column whose `commit_ts` is in range `[0, ts]`. The record contains the `start_ts` of the transaction when it was committed.
 4. Get the row's value in the `data` column whose timestamp is exactly `start_ts`. Then the value is what we want.
@@ -112,7 +110,7 @@ This algorithm provides us with the abilities of both lock-free read and histori
 
 Conflicts are identified by checking the `lock` column. A row can have many versions of data, but it can have at most one lock at any time.
 
-When we are performing a write operation, we try to lock every affected row in the `Prewrite` phase. If we failed to lock some of these rows, the whole transaction will be rolled back. As an optimistic lock algorithm, sometimes it causes a shortage of Percolator: there may be performance regression in scenarios where conflicts occur frequently.
+When we are performing a write operation, we try to lock every affected row in the `Prewrite` phase. If we failed to lock some of these rows, the whole transaction will be rolled back. As an optimistic lock algorithm, sometimes Percolator's transactional write algorithm may meet performance regressions in scenarios where conflicts occur frequently.
 
 To roll back a row, just simply remove its lock and its corresponding value in `data` column.
 
