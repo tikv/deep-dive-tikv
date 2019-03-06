@@ -18,7 +18,7 @@ Percolator also relies on a service named *timestamp oracle*. The timestamp orac
 
 Percolator is a multi-version storage, and a data item's version is represented by the timestamp when the transaction was committed.
 
-For example, in such a state:
+For example,
 
 | key | v:data | v:lock | v"write |
 |-----|--------|--------|---------|
@@ -26,7 +26,7 @@ For example, in such a state:
 
 The state in the table means that for key `k1`, value `"value1"` was committed at timestamp `12`. Then there is an uncommitted version whose value is `"value2"`, and it's uncommitted because there's a lock. You will understand why it is like this after understanding how transactions work.
 
-The data of a specific row and a specific Percolator column is named a *cell*. The above example shows different versions of data for a single cell.
+The above example shows different versions of data for a single cell.
 
 The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incremental processing. After a modification, `c:notify` column is used to mark the modified cell to be dirty. Users can add some *observers* to Percolator which can do user-specified operations when they find data of their observed columns has changed. To find whether data is changed, the observers continuously scan the `notify` columns to find dirty cells. `c:ack_O` is the "acknowledgment" column of observer `O`, which is used to prevent a row from being incorrectly notified twice. It saves the timestamp of the observer's last execution.
 
@@ -35,16 +35,16 @@ The remaining columns, `c:notify` and `c:ack_O`, are used for Percolator's incre
 Percolator's transactions are committed by a 2-phase commit (2PC) algorithm. Its two phases are `Prewrite` and `Commit`.
 
 In `Prewrite` phase:
-1. Get a timestamp from the timestamp oracle, and we call the timestamp the transaction's `start_ts`.
+1. Get a timestamp from the timestamp oracle, and we call the timestamp `start_ts` of the transaction.
 2. For each row involved in the transaction, put a lock in the `lock` column. At the same time, write the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, while others are *secondary* locks. Each lock contains the transaction's `start_ts`. Each secondary lock, in addition, contains the location of the primary lock.
     * If there's already a lock or newer version than `start_ts`, the current transaction will be rolled back.
 
 And then, in the`Commit` phase:
 1. Get another timestamp, namely `commit_ts`.
-2. Remove the primary lock, and at the same time write a record to the `write` column with timestamp `commit_ts`, whose value records the transaction's `start_ts`. If the primary lock is missing, the commit should fail.
-3. Then for all secondary locks, repeat the process above.
+2. Remove the primary lock, and at the same time write a record to the `write` column with timestamp `commit_ts`, whose value records the transaction's `start_ts`. If the primary lock is missing, the commit fails.
+3. Repeat the process above for all secondary locks.
 
-Once the step 2 (committing the primary) is done, we say the whole transaction is done. It doesn't matter if the process of committing the secondaries unexpectedly exited.
+Once step 2 (committing the primary) is done, the whole transaction is done. It doesn't matter if the process of committing the secondary locks failed.
 
 Let's see the example from the paper of Percolator. Assume we are writing two rows in a single transaction. At first, the data looks like this:
 
@@ -106,7 +106,7 @@ Let's read Bob's balance.
 3. Get the latest record in the `write` column committed before `9`. We get a record with `commit_ts` equals to `8`, and`start_ts` `7`, which means, its corresponding data is at timestamp `7` in the `data` column.
 4. Get the value in the `data` column with timestamp `7`. `$3` is the result to the read.
 
-This algorithm provides us both lock-free reading and the ability to perform historical read. In the above example, if we specify that we want to read at time point `7`, then we will see the write record at timestamp `6`, giving us the result `$10` at timestamp `5`.
+This algorithm provides us with the abilities of both lock-free read and historical read. In the above example, if we specify that we want to read at time point `7`, then we will see the write record at timestamp `6`, giving us the result `$10` at timestamp `5`.
 
 ### Handling Conflicts
 
@@ -126,7 +126,7 @@ So, when a transaction `T1` (either reading or writing) finds that a row `R1` ha
 
 * If the primary lock has disappeared and there's a record `data @ T0.start_ts` in the `write` column, it means that `T0` has been successfully committed. Then row `R1`'s stale lock can also be committed. Usually we call this `rolling forward`. After this, the new transaction `T1` resumes.
 * If the primary lock has disappeared with nothing left, it means the transaction has been rolled back. Then row `R1`'s stale lock should also be rolled back. After this, `T1` resumes.
-* If the primary lock exists but it's too old (out of TTL set to the lock), it indicates that the transaction has crashed before being committed or rolled back.  Roll back `T1` and it will resume.
+* If the primary lock exists but it's too old (out of TTL set to the lock), it indicates that the transaction has crashed before being committed or rolled back. Roll back `T1` and it will resume.
 * Otherwise, we consider transaction `T0` to be still running. `T1` can rollback itself, or try to wait for a while to see whether `T0` will be committed before `T1.start_ts`.
 
 ## Percolator in TiKV
@@ -153,4 +153,4 @@ Our approach to compound user keys and timestamps together is:
 
 For example, key `"key1"` and timestamp `3` will be encoded as `"key1\x00\x00\x00\x00\xfb\xff\xff\xff\xff\xff\xff\xff\xfe"`, where the first 9 bytes is the memcomparable-encoded key and the remaining 8 bytes is the inverted timestamp in big-endian. In this way, different versions of the same key are always adjacent in RocksDB; and for each key, newer versions are always before older ones.
 
-There are some differences between TiKV and the Percolator's paper. In TiKV, records in `CF_WRITE` has four different types: `Put`, `Delete`, `Rollback` and `Lock`. Only `Put` records need a corresponding value in `CF_DEFAULT`. When rolling back transactions, we don't simply remove the lock but writes a `Rollback` record in `CF_WRITE`. Different from Percolator's lock, the `Lock` type of write records in TiKV is produced by queries like `SELECT ... FOR UPDATE` in TiDB. For keys affected by this query,  they are not only the objects for read, but the reading is also part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.
+There are some differences between TiKV and the Percolator's paper. In TiKV, records in `CF_WRITE` has four different types: `Put`, `Delete`, `Rollback` and `Lock`. Only `Put` records need a corresponding value in `CF_DEFAULT`. When rolling back transactions, we don't simply remove the lock but writes a `Rollback` record in `CF_WRITE`. Different from Percolator's lock, the `Lock` type of write records in TiKV is produced by queries like `SELECT ... FOR UPDATE` in TiDB. For keys affected by this query, they are not only the objects for read, but the reading is also part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.
