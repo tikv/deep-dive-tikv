@@ -110,7 +110,7 @@ This algorithm provides us with the abilities of both lock-free read and histori
 
 Conflicts are identified by checking the `lock` column. A row can have many versions of data, but it can have at most one lock at any time.
 
-When we are performing a write operation, we try to lock every affected row in the `Prewrite` phase. If we failed to lock some of these rows, the whole transaction will be rolled back. As an optimistic lock algorithm, sometimes Percolator's transactional write algorithm may meet performance regressions in scenarios where conflicts occur frequently.
+When we are performing a write operation, we try to lock every affected row in the `Prewrite` phase. If we failed to lock some of these rows, the whole transaction will be rolled back. Using an optimistic lock algorithm, sometimes Percolator's transactional write may encounter performance regressions in scenarios where conflicts occur frequently.
 
 To roll back a row, just simply remove its lock and its corresponding value in `data` column.
 
