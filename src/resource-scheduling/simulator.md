@@ -2,18 +2,18 @@
 
 ## Overview
 
-With its flexibility and significant benefits of reducing the time and the
-cost, the simulator plays an important role in studying and designing a
-computer architecture. It is often used to validate specific design schemes
+With its flexibility and significant benefits of reducing time and cost, the
+simulator plays an important role in studying and designing a computer
+architecture. It is often used to validate specific design schemes
 and evaluate the effectiveness of design schemes.
 
 ## Workflow
 
-Since this book is mainly targeted towards the people who are interesting in
+Since this book is mainly targeted towards the people who are interested in
 TiKV, we will focus on using the simulator to deal with the scheduling
 problem.
 In general, when there is a lack of resources or the problem is hard to
-reproduce, we might consider using the simulator to make it.
+reproduce, we might consider using the simulator.
 
 A simulation for the scheduling problem in the distributed system
 usually consists of the following steps:
@@ -30,9 +30,9 @@ characteristics of the workload. In the third step, the simulation will run
 and provide the scheduling output. In the final step, you can check the
 result and dig into the scheduling problem if the result is not as expected.
 
-## PD simulator
+## PD Simulator
 
-In PD, we also need the simulator to locate a scheduling problem.
+In PD, we also need a simulator to locate a scheduling problem.
 The simulator can be used to simulate a large-scale cluster and scenarios
 with different users.
 And for some special scenarios, we can keep them so that we can quickly
