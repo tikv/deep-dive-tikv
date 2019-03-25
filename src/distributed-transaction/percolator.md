@@ -14,7 +14,7 @@ Percolator is built based on Google's BigTable, a distributed storage system tha
 * `c:notify`
 * `c:ack_O`
 
-Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produce timestamps in a strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp coming from the timestamp oracle will be regarded as the logical time when the read/write operation happens.
+Percolator also relies on a service named *timestamp oracle*. The timestamp oracle can produce timestamps in a strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp coming from the timestamp oracle will be used as the time when the read/write operation happens.
 
 Percolator is a multi-version storage, and a data item's version is represented by the timestamp when the transaction was committed.
 
@@ -34,8 +34,8 @@ Percolator's transactions are committed by a 2-phase commit (2PC) algorithm. Its
 
 In `Prewrite` phase:
 1. Get a timestamp from the timestamp oracle, and we call the timestamp `start_ts` of the transaction.
-2. For each row involved in the transaction, put a lock in the `lock` column. At the same time, write the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, while others are *secondary* locks. Each lock contains the transaction's `start_ts`. Each secondary lock, in addition, contains the location of the primary lock.
-    * If there's already a lock or newer version than `start_ts`, the current transaction will be rolled back.
+2. For each row involved in the transaction, put a lock in the `lock` column and write the value to the `data` column with the timestamp `start_ts`. One of these locks will be chosen as the *primary* lock, while others are *secondary* locks. Each lock contains the transaction's `start_ts`. Each secondary lock, in addition, contains the location of the primary lock.
+    * If there's already a lock or newer version than `start_ts`, the current transaction will be rolled back because of write conflict.
 
 And then, in the`Commit` phase:
 1. Get another timestamp, namely `commit_ts`.
@@ -84,10 +84,10 @@ Then `Commit`:
 
 Reading from Percolator also requires a timestamp. The procedure to perform a read operation is as follows:
 
-1. Get a timestamp, `ts`.
-2. Check if the row we are going to read is locked with a timestamp in the range `[0, ts]`;
-    * If there is a timestamp in range `[0, ts]`, it means the row is locked by an earlier-started transaction. Then we are not sure whether that transaction will be committed before or after `ts`.
-    * If there is not such a timestamp, the read can continue.
+1. Get a timestamp `ts`.
+2. Check if the row we are going to read is locked with a timestamp in the range `[0, ts]`.
+    * If there is a lock with the timestamp in range `[0, ts]`, it means the row was locked by an earlier-started transaction. Then we are not sure whether that transaction will be committed before or after `ts`. In this case the reading will backoff and try again then.
+    * If there is no lock or the lock's timestamp is greater than `ts`, the read can continue.
 3. Get the latest record in the row's `write` column whose `commit_ts` is in range `[0, ts]`. The record contains the `start_ts` of the transaction when it was committed.
 4. Get the row's value in the `data` column whose timestamp is exactly `start_ts`. Then the value is what we want.
 
@@ -124,7 +124,7 @@ So, when a transaction `T1` (either reading or writing) finds that a row `R1` ha
 
 * If the primary lock has disappeared and there's a record `data @ T0.start_ts` in the `write` column, it means that `T0` has been successfully committed. Then row `R1`'s stale lock can also be committed. Usually we call this `rolling forward`. After this, the new transaction `T1` resumes.
 * If the primary lock has disappeared with nothing left, it means the transaction has been rolled back. Then row `R1`'s stale lock should also be rolled back. After this, `T1` resumes.
-* If the primary lock exists but it's too old (out of TTL set to the lock), it indicates that the transaction has crashed before being committed or rolled back. Roll back `T1` and it will resume.
+* If the primary lock exists but it's too old (we can determine this by saving the wall time to locks), it indicates that the transaction has crashed before being committed or rolled back. Roll back `T1` and it will resume.
 * Otherwise, we consider transaction `T0` to be still running. `T1` can rollback itself, or try to wait for a while to see whether `T0` will be committed before `T1.start_ts`.
 
 ## Percolator in TiKV
