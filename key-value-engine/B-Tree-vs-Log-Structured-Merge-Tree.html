@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>B-Tree vs Log-Structured Merge-Tree - Deep Dive TiKV</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li><a href="../overview/introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><a href="../consensus-algorithm/introduction.html"><strong aria-hidden="true">2.</strong> Consensus Algorithm</a></li><li><ol class="section"><li><a href="../consensus-algorithm/consistency-availability-partitioning.html"><strong aria-hidden="true">2.1.</strong> Consistency, Availability, &amp; Partitioning</a></li><li><a href="../consensus-algorithm/byzantine-failure.html"><strong aria-hidden="true">2.2.</strong> Byzantine Failure</a></li><li><a href="../consensus-algorithm/paxos.html"><strong aria-hidden="true">2.3.</strong> Paxos</a></li><li><a href="../consensus-algorithm/raft.html"><strong aria-hidden="true">2.4.</strong> Raft</a></li></ol></li><li><a href="../key-value-engine/introduction.html"><strong aria-hidden="true">3.</strong> Key-Value Engine</a></li><li><ol class="section"><li><a href="../key-value-engine/B-Tree-vs-Log-Structured-Merge-Tree.html" class="active"><strong aria-hidden="true">3.1.</strong> B-Tree vs Log-Structured Merge-Tree</a></li><li><a href="../key-value-engine/rocksdb.html"><strong aria-hidden="true">3.2.</strong> RocksDB</a></li></ol></li><li><a href="../distributed-transaction/introduction.html"><strong aria-hidden="true">4.</strong> Distributed Transaction</a></li><li><ol class="section"><li><a href="../distributed-transaction/isolation-level.html"><strong aria-hidden="true">4.1.</strong> Isolation Level</a></li><li><a href="../distributed-transaction/distributed-algorithms.html"><strong aria-hidden="true">4.2.</strong> Distributed Algorithms</a></li><li><a href="../distributed-transaction/pessimistic-and-optimistic-locking.html"><strong aria-hidden="true">4.3.</strong> Pessimistic &amp; Optimistic Locking</a></li><li><a href="../distributed-transaction/timestamp-oracle.html"><strong aria-hidden="true">4.4.</strong> Timestamp Oracle</a></li><li><a href="../distributed-transaction/percolator.html"><strong aria-hidden="true">4.5.</strong> Percolator</a></li></ol></li><li><a href="../scalability/introduction.html"><strong aria-hidden="true">5.</strong> Scalability</a></li><li><ol class="section"><li><a href="../scalability/horizontal-or-vertical.html"><strong aria-hidden="true">5.1.</strong> Horizontal or Vertical</a></li><li><a href="../scalability/data-sharding.html"><strong aria-hidden="true">5.2.</strong> Data Sharding</a></li><li><a href="../scalability/multi-raft.html"><strong aria-hidden="true">5.3.</strong> Multi-raft</a></li></ol></li><li><a href="../resource-scheduling/introduction.html"><strong aria-hidden="true">6.</strong> Resource Scheduling</a></li><li><ol class="section"><li><a href="../resource-scheduling/scheduler-of-kubernetes.html"><strong aria-hidden="true">6.1.</strong> Scheduler of Kubernetes</a></li><li><a href="../resource-scheduling/mesos.html"><strong aria-hidden="true">6.2.</strong> Mesos</a></li></ol></li><li><a href="../distributed-sql/introduction.html"><strong aria-hidden="true">7.</strong> Distributed SQL over TiKV</a></li><li><ol class="section"><li><a href="../TODO.html"><strong aria-hidden="true">7.1.</strong> Store</a></li><li><a href="../distributed-sql/dist-sql.html"><strong aria-hidden="true">7.2.</strong> Dist SQL</a></li></ol></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css" integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv" crossorigin="anonymous">
+
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js" integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O" crossorigin="anonymous"></script>
+
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js" integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">Deep Dive TiKV</h1> 
+
+                        <div class="right-buttons">
+                            <a href="../print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#b-tree-vs-log-structured-merge-tree" id="b-tree-vs-log-structured-merge-tree"><h1>B-Tree vs Log-Structured Merge-Tree</h1></a>
+<p>The <a href="https://en.wikipedia.org/wiki/B-tree">B-tree</a> and the <a href="https://en.wikipedia.org/wiki/Log-structured_merge-tree">Log-Structured Merge-tree</a> (LSM-tree) are the two most widely used data structures for data-intensive applications to organize and store data. However, each of them has its own advantages and disadvantages. This article aims to use quantitative approaches to compare these two data structures.</p>
+<a class="header" href="#metrics" id="metrics"><h2>Metrics</h2></a>
+<p>In general, there are three critical metrics to measure the performance of a data structure: write amplification, read amplification, and space amplification. This section aims to describe these metrics.</p>
+<p>For hard disk drives (HDDs), the cost of disk seek is enormous, such that the performance of random read/write is worse than that of sequential read/write. This article assumes that flash-based storage is used so we can ignore the cost of disk seeks.</p>
+<a class="header" href="#write-amplification" id="write-amplification"><h3>Write Amplification</h3></a>
+<p><em>Write amplification</em> is the ratio of the amount of data written to the storage device versus the amount of data written to the database.</p>
+<p>For example, if you are writing 10 MB to the database and you observe 30 MB disk write rate, your write amplification is 3.</p>
+<p>Flash-based storage can be written to only a finite number of times, so write amplification will decrease the flash lifetime.</p>
+<p>There is another write amplification associated with flash memory and SSDs because flash memory must be erased before it can be rewritten.</p>
+<a class="header" href="#read-amplification" id="read-amplification"><h3>Read Amplification</h3></a>
+<p><em>Read amplification</em> is the number of disk reads per query.</p>
+<p>For example, if you need to read 5 pages to answer a query, read amplification is 5.</p>
+<p>Note that the units of write amplification and read amplification are different. Write amplification measures how much more data is written than the application thought it was writing, whereas read amplification counts the number of disk reads to perform a query.</p>
+<p>Read amplification is defined separately for point query and range queries. For range queries the range length matters (the number of rows to be fetched).</p>
+<p>Caching is a critical factor for read amplification. For example, with a B-tree in the cold-cache case, a point query requires \(O(log_BN)\) disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.</p>
+<a class="header" href="#space-amplification" id="space-amplification"><h3>Space Amplification</h3></a>
+<p><em>Space amplification</em> is the ratio of the amount of data on the storage device versus the amount of data in the database.</p>
+<p>For example, if you put 10MB in the database and this database uses 100MB on the disk, then the space amplification is 10.</p>
+<p>Generally speaking, a data structure can optimize for at most two from read, write, and space amplification. This means one data structure is unlikely to be better than another at all three. For example a B-tree has less read amplification than an LSM-tree while an LSM-tree has less write amplification than a B-tree.</p>
+<a class="header" href="#analysis" id="analysis"><h2>Analysis</h2></a>
+<p>The B-tree is a generalization of <a href="https://en.wikipedia.org/wiki/Binary_search_tree">binary search tree</a> in which a node can have more than two children. There are two kinds of node in a B-tree, internal nodes, and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range. Internal nodes may be joined or split. An example of a B-tree appears in <em>Figure 1</em>.</p>
+<p><img src="B_tree.png" alt="Figure 1" /></p>
+<blockquote>
+<p>Figure 1. The root node is shown at the top of the tree, and in this case happens to contain a single pivot (20), indicating that records with key k where k ≤ 20 are stored in the first child, and records with key k where k &gt; 20 are stored in the second child. The first child contains two pivot keys (11 and 15), indicating that records with key k where k ≤ 11 is stored in the first child, those with 11 &lt; k ≤ 15 are stored in the second child, and those with k &gt; 15 are stored in the third child. The leftmost leaf node contains three values (3, 5, and 7).</p>
+</blockquote>
+<p>The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The <a href="https://en.wikipedia.org/wiki/B%2B_tree">B+ tree</a> is one of the most famous variations of B-tree. The idea behind the B+ tree is that internal nodes only contain keys, and an additional level which contains values is added at the bottom with linked leaves.</p>
+<p>Like other search trees, an LSM-tree contains key-value pairs. It maintains data in two or more separate components (sometimes called <code>SSTable</code>s), each of which is optimized for its respective underlying storage medium; the data in the low level component is efficiently merged with the data in the high level component in batches. An example of LSM-tree appears in <em>Figure 2</em>.</p>
+<p><img src="LSM_Tree.png" alt="Figure 2" /></p>
+<blockquote>
+<p>Figure 2. The LSM-tree contains \(k\) components. Data starts in \(C_0\), then gets merged into the \(C_1\). Eventually the \(C_1\) is merged into the \(C_2\), and so forth.</p>
+</blockquote>
+<p>An LSM-tree periodically performs <em>compaction</em> to merge several <code>SSTable</code>s into one new <code>SSTable</code> which contains only the live data from the input <code>SSTable</code>s. Compaction helps the LSM-tree to recycle space and reduce read amplification. There are two kinds of <em>compaction strategy</em>: Size-tiered compaction strategy (STCS) and Level-based compaction strategy (LBCS). The idea behind STCS is to compact small <code>SSTable</code>s into medium <code>SSTable</code>s when the LSM-tree has enough small <code>SSTable</code>s and compact medium <code>SSTable</code>s into large <code>SSTable</code>s when LSM-tree has enough medium <code>SSTable</code>s. The idea of LBCS is to organize data into levels and each level contains one sorted run. Once a level accumulates enough data, some of the data at this level will be compacted to the higher level.</p>
+<p>This section discusses the write amplification and read amplification of B+tree and Level-Based LSM-tree.</p>
+<a class="header" href="#b-tree" id="b-tree"><h3>B+ Tree</h3></a>
+<p>In the B+ tree, copies of the keys are stored in the internal nodes; the keys and records are stored in leaves; in addition, a leaf node may include a pointer to the next leaf node to increase sequential access performance.</p>
+<p>To simplify the analysis, assume that the block size of the tree is \(B\) measured in bytes, and keys, pointers, and records are constant size, so that each internal node contains \(O(B)\) children and each leaf contains \(O(B)\) data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B+ tree is
+$$
+O(log_BN/B)
+$$
+where \(N\) is the size of the database.</p>
+<a class="header" href="#write-amplification-1" id="write-amplification-1"><h4>Write Amplification</h4></a>
+<p>For the worst-case insertion workloads, every insertion requires writing the leaf block containing the record, so the write amplification is \(B\).</p>
+<a class="header" href="#read-amplification-1" id="read-amplification-1"><h4>Read Amplification</h4></a>
+<p>The number of disk reads per query is at most \(O(log_BN/B)\), which is the depth of the tree.</p>
+<a class="header" href="#level-based-lsm-tree" id="level-based-lsm-tree"><h3>Level-Based LSM-tree</h3></a>
+<p>In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor \(k\) is specified as the magnification of data size at each level.</p>
+<p>$$
+level_i = level_{i-1} * k
+$$
+We can analyze the Level-based LSM-tree as follows. If the growth factor is \(k\) and the smallest level is a single file of size \(B\), then the number of levels is</p>
+<p>$$
+Θ(log_kN/B)
+$$
+where \(N\) is the size of the database. In order to simplify the analysis, we assume that database size is stable and grows slowly over time, so that the size of database will be nearly equal to the size of last level.</p>
+<a class="header" href="#write-amplification-2" id="write-amplification-2"><h4>Write Amplification</h4></a>
+<p>Data must be moved out of each level once, but data from a given level is merged repeatedly with data from the previous level. On average, after being first written into a level, each data item is remerged back into the same level about \(k/2\) times. So the total write amplification is
+$$
+Θ(k*log_kN/B)
+$$</p>
+<a class="header" href="#read-amplification-2" id="read-amplification-2"><h4>Read Amplification</h4></a>
+<p>To perform a short range query in the cold cache case, we must perform a binary search
+on each of the levels.</p>
+<p>For the highest \(level_i\), the data size is \(O(N)\), so that it performs \(O(logN/B)\) disk reads.</p>
+<p>For the previous \(level_{i-1}\), the data size is \(O(N/k)\), so that it performs \(O(log(N/(kB))\) disk reads.</p>
+<p>For \(level_{i-2}\), the data size is \(O(N/k^2)\), so that it performs \(O(log(N/k^2B)\) disk reads.</p>
+<p>…</p>
+<p>For \(level_{i-n}\), the data size is \(O(N/k^n)\), so that it performs \(O(log(N/k^nB)\) disk reads.</p>
+<p>So that the total number of disk reads is</p>
+<p>$$
+R = O(logN/B) + O(log(N/(kB)) + O(log(N/k^2B) + ... + O(log(N/k^nB) + 1 = O((log^2N/B)/logk)
+$$</p>
+<a class="header" href="#summary" id="summary"><h2>Summary</h2></a>
+<p>The following table shows the summary of various kinds of amplification:</p>
+<table><thead><tr><th align="center">    Data Structure    </th><th align="center"> Write Amplification </th><th align="center">    Read Amplification    </th></tr></thead><tbody>
+<tr><td align="center">       B+ tree        </td><td align="center">     \(Θ(B)\)      </td><td align="center">    \(O(log_BN/B)\)     </td></tr>
+<tr><td align="center"> Level-Based LSM-tree </td><td align="center"> \(Θ(klog_kN/B)\)  </td><td align="center"> \(Θ((log^2N/B)/logk)\) </td></tr>
+</tbody></table>
+<blockquote>
+<p>Table 1. A summary of the write amplification and read amplification for range queries.</p>
+</blockquote>
+<p>Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, we can come to a conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../key-value-engine/introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../key-value-engine/rocksdb.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="../key-value-engine/introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a href="../key-value-engine/rocksdb.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

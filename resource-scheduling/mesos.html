@@ -1,0 +1,260 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Mesos - Deep Dive TiKV</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li><a href="../overview/introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><a href="../consensus-algorithm/introduction.html"><strong aria-hidden="true">2.</strong> Consensus Algorithm</a></li><li><ol class="section"><li><a href="../consensus-algorithm/consistency-availability-partitioning.html"><strong aria-hidden="true">2.1.</strong> Consistency, Availability, &amp; Partitioning</a></li><li><a href="../consensus-algorithm/byzantine-failure.html"><strong aria-hidden="true">2.2.</strong> Byzantine Failure</a></li><li><a href="../consensus-algorithm/paxos.html"><strong aria-hidden="true">2.3.</strong> Paxos</a></li><li><a href="../consensus-algorithm/raft.html"><strong aria-hidden="true">2.4.</strong> Raft</a></li></ol></li><li><a href="../key-value-engine/introduction.html"><strong aria-hidden="true">3.</strong> Key-Value Engine</a></li><li><ol class="section"><li><a href="../key-value-engine/B-Tree-vs-Log-Structured-Merge-Tree.html"><strong aria-hidden="true">3.1.</strong> B-Tree vs Log-Structured Merge-Tree</a></li><li><a href="../key-value-engine/rocksdb.html"><strong aria-hidden="true">3.2.</strong> RocksDB</a></li></ol></li><li><a href="../distributed-transaction/introduction.html"><strong aria-hidden="true">4.</strong> Distributed Transaction</a></li><li><ol class="section"><li><a href="../distributed-transaction/isolation-level.html"><strong aria-hidden="true">4.1.</strong> Isolation Level</a></li><li><a href="../distributed-transaction/distributed-algorithms.html"><strong aria-hidden="true">4.2.</strong> Distributed Algorithms</a></li><li><a href="../distributed-transaction/pessimistic-and-optimistic-locking.html"><strong aria-hidden="true">4.3.</strong> Pessimistic &amp; Optimistic Locking</a></li><li><a href="../distributed-transaction/timestamp-oracle.html"><strong aria-hidden="true">4.4.</strong> Timestamp Oracle</a></li><li><a href="../distributed-transaction/percolator.html"><strong aria-hidden="true">4.5.</strong> Percolator</a></li></ol></li><li><a href="../scalability/introduction.html"><strong aria-hidden="true">5.</strong> Scalability</a></li><li><ol class="section"><li><a href="../scalability/horizontal-or-vertical.html"><strong aria-hidden="true">5.1.</strong> Horizontal or Vertical</a></li><li><a href="../scalability/data-sharding.html"><strong aria-hidden="true">5.2.</strong> Data Sharding</a></li><li><a href="../scalability/multi-raft.html"><strong aria-hidden="true">5.3.</strong> Multi-raft</a></li></ol></li><li><a href="../resource-scheduling/introduction.html"><strong aria-hidden="true">6.</strong> Resource Scheduling</a></li><li><ol class="section"><li><a href="../resource-scheduling/scheduler-of-kubernetes.html"><strong aria-hidden="true">6.1.</strong> Scheduler of Kubernetes</a></li><li><a href="../resource-scheduling/mesos.html" class="active"><strong aria-hidden="true">6.2.</strong> Mesos</a></li></ol></li><li><a href="../distributed-sql/introduction.html"><strong aria-hidden="true">7.</strong> Distributed SQL over TiKV</a></li><li><ol class="section"><li><a href="../TODO.html"><strong aria-hidden="true">7.1.</strong> Store</a></li><li><a href="../distributed-sql/dist-sql.html"><strong aria-hidden="true">7.2.</strong> Dist SQL</a></li></ol></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css" integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv" crossorigin="anonymous">
+
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js" integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O" crossorigin="anonymous"></script>
+
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js" integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">Deep Dive TiKV</h1> 
+
+                        <div class="right-buttons">
+                            <a href="../print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#mesos" id="mesos"><h1>Mesos</h1></a>
+<a class="header" href="#overview" id="overview"><h2>Overview</h2></a>
+<p>Mesos was originally launched by UC Berkeley's AMPLab in 2009. It is lisenced under Apache and now operated by Mesosphere, Inc.</p>
+<p>Mesos can abstract and schedule the resources of the entire data center (including CPU, memory, storage, network, etc.). This allows multiple applications to run in a cluster at the same time without needing to care about the physical distribution of resources.</p>
+<p>Mesos has many compelling features, including:</p>
+<ul>
+<li>Support for large scale scenarios with tens of thousands of nodes (adopted by Apple, Twitter, eBay, etc.)</li>
+<li>Support for multiple application frameworks, including Marathon, Singularity, Aurora, etc.</li>
+<li>High Availability (relies on ZooKeeper)</li>
+<li>Support for Docker, LXC and other container techniques</li>
+<li>Providing APIs for several popular languages, including Python, Java, C++, etc.</li>
+<li>A simple and easy-to-use WebUI</li>
+</ul>
+<a class="header" href="#architecture" id="architecture"><h2>Architecture</h2></a>
+<p>It is important to notice that Mesos itself is only a resource scheduling framework. It is not a complete application management platform, so Mesos can't work only on its own. However, based on Mesos, it is relatively easy to provide distributed operation capabilities for various application management frameworks or middleware platforms. Multiple frameworks can also run in a single Mesos cluster at the same time, improving overall resource utilization efficiency.</p>
+<p><img src="mesos-architecture.png" alt="Figure 1" /></p>
+<a class="header" href="#components" id="components"><h2>Components</h2></a>
+<p>Mesos consists of a master process that manages slave daemons running on each cluster node, and frameworks that run tasks on these slaves.</p>
+<ul>
+<li>
+<p>Mesos master</p>
+<p>The <em>master</em> sees the global information, and is responsible for resource scheduling and logical control between different <em>frameworks</em>. The <em>frameworks</em> need to be registered to <em>master</em> in order to be used. It uses Zookeeper to achieve HA.</p>
+</li>
+<li>
+<p>Mesos salve</p>
+<p>The <em>slave</em> is responsible for reporting the resource status (idle resources, running status, etc.) on the slave node to <em>master</em>, and is responsible for isolating the local resources to perform the specific tasks assigned by master.</p>
+</li>
+<li>
+<p>Frameworks</p>
+<p>Each <em>framework</em> consists of two components: a <em>scheduler</em> that registers with the <em>master</em> to be offered resources, and an <em>executor</em> process that is launched on <em>slave</em> nodes to run the <em>framework</em>’s tasks.</p>
+</li>
+</ul>
+<a class="header" href="#resource-scheduling" id="resource-scheduling"><h2>Resource scheduling</h2></a>
+<p>To support the sophisticated schedulers of today's frameworks, Mesos introduces a distributed two-level scheduling mechanism called <em>resource offers</em>.</p>
+<p>Each resource offer is a list of free resources (for example, &lt;1Core CPU, 2GB RAM&gt;) on multiple slaves. While the <em>master</em> decides how many resources to offer to each framework according to an organizational policy, the frameworks’ schedulers select which of the offered resources to use. When a framework accepts offered resources, it passes Mesos a description of the tasks it wants to launch on them.</p>
+<p><img src="mesos-scheduling.png" alt="Figure 2" /></p>
+<p>The figure shows an example of how resource scheduling works:</p>
+<ol>
+<li>Slave 1 reports to the master that it has 4 CPUs and 4 GB of memory free. The master then invokes the allocation policy module, which tells it that framework 1 should be offered all available resources.</li>
+<li>The master sends a resource offer describing what is available on slave 1 to framework 1.</li>
+<li>The framework’s scheduler replies to the master with information about two tasks to run on the slave, using &lt;2 CPUs, 1 GB RAM&gt; for the first task, and &lt;1 CPUs, 2 GB RAM&gt; for the second task.</li>
+<li>Finally, the master sends the tasks to the slave, which allocates appropriate resources to the framework’s executor, which in turn launches the two tasks (depicted with dotted-line borders in the figure). Because 1 CPU and 1 GB of RAM are still unallocated, the allocation module may now offer them to framework 2.</li>
+</ol>
+<p>To maintain a thin interface and enable frameworks to evolve independently, Mesos does not require frameworks to specify their resource requirements or constraints. Instead, Mesos gives frameworks the ability to reject offers. A framework can reject resources that do not satisfy its constraints in order to wait for ones that do. Thus, the rejection mechanism enables frameworks to support arbitrarily complex resource constraints while keeping Mesos simple and scalable.</p>
+<a class="header" href="#references" id="references"><h2>References</h2></a>
+<ol>
+<li><a href="https://people.eecs.berkeley.edu/%7Ealig/papers/mesos.pdf">Mesos: A Platform for Fine-Grained Resource Sharing in the Data Center</a></li>
+<li><a href="https://yeasy.gitbooks.io/docker_practice/mesos/intro.html">Mesos introduction (in Chinese)</a></li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../resource-scheduling/scheduler-of-kubernetes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../distributed-sql/introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="../resource-scheduling/scheduler-of-kubernetes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a href="../distributed-sql/introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

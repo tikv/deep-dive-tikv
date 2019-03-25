@@ -1,0 +1,970 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Deep Dive TiKV</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li><a href="overview/introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><a href="consensus-algorithm/introduction.html"><strong aria-hidden="true">2.</strong> Consensus Algorithm</a></li><li><ol class="section"><li><a href="consensus-algorithm/consistency-availability-partitioning.html"><strong aria-hidden="true">2.1.</strong> Consistency, Availability, &amp; Partitioning</a></li><li><a href="consensus-algorithm/byzantine-failure.html"><strong aria-hidden="true">2.2.</strong> Byzantine Failure</a></li><li><a href="consensus-algorithm/paxos.html"><strong aria-hidden="true">2.3.</strong> Paxos</a></li><li><a href="consensus-algorithm/raft.html"><strong aria-hidden="true">2.4.</strong> Raft</a></li></ol></li><li><a href="key-value-engine/introduction.html"><strong aria-hidden="true">3.</strong> Key-Value Engine</a></li><li><ol class="section"><li><a href="key-value-engine/B-Tree-vs-Log-Structured-Merge-Tree.html"><strong aria-hidden="true">3.1.</strong> B-Tree vs Log-Structured Merge-Tree</a></li><li><a href="key-value-engine/rocksdb.html"><strong aria-hidden="true">3.2.</strong> RocksDB</a></li></ol></li><li><a href="distributed-transaction/introduction.html"><strong aria-hidden="true">4.</strong> Distributed Transaction</a></li><li><ol class="section"><li><a href="distributed-transaction/isolation-level.html"><strong aria-hidden="true">4.1.</strong> Isolation Level</a></li><li><a href="distributed-transaction/distributed-algorithms.html"><strong aria-hidden="true">4.2.</strong> Distributed Algorithms</a></li><li><a href="distributed-transaction/pessimistic-and-optimistic-locking.html"><strong aria-hidden="true">4.3.</strong> Pessimistic &amp; Optimistic Locking</a></li><li><a href="distributed-transaction/timestamp-oracle.html"><strong aria-hidden="true">4.4.</strong> Timestamp Oracle</a></li><li><a href="distributed-transaction/percolator.html"><strong aria-hidden="true">4.5.</strong> Percolator</a></li></ol></li><li><a href="scalability/introduction.html"><strong aria-hidden="true">5.</strong> Scalability</a></li><li><ol class="section"><li><a href="scalability/horizontal-or-vertical.html"><strong aria-hidden="true">5.1.</strong> Horizontal or Vertical</a></li><li><a href="scalability/data-sharding.html"><strong aria-hidden="true">5.2.</strong> Data Sharding</a></li><li><a href="scalability/multi-raft.html"><strong aria-hidden="true">5.3.</strong> Multi-raft</a></li></ol></li><li><a href="resource-scheduling/introduction.html"><strong aria-hidden="true">6.</strong> Resource Scheduling</a></li><li><ol class="section"><li><a href="resource-scheduling/scheduler-of-kubernetes.html"><strong aria-hidden="true">6.1.</strong> Scheduler of Kubernetes</a></li><li><a href="resource-scheduling/mesos.html"><strong aria-hidden="true">6.2.</strong> Mesos</a></li></ol></li><li><a href="distributed-sql/introduction.html"><strong aria-hidden="true">7.</strong> Distributed SQL over TiKV</a></li><li><ol class="section"><li><a href="TODO.html"><strong aria-hidden="true">7.1.</strong> Store</a></li><li><a href="distributed-sql/dist-sql.html"><strong aria-hidden="true">7.2.</strong> Dist SQL</a></li></ol></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css" integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv" crossorigin="anonymous">
+
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js" integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O" crossorigin="anonymous"></script>
+
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js" integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">Deep Dive TiKV</h1> 
+
+                        <div class="right-buttons">
+                            <a href="print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#introduction" id="introduction"><h1>Introduction</h1></a>
+<p><a href="https://github.com/tikv/tikv">TiKV</a> is a distributed, transactional key-value database. It has been widely adopted in many critical production environments — see the <a href="https://github.com/tikv/tikv/blob/master/docs/adopters.md">TiKV adopters</a>. It has also been accepted by the <a href="https://www.cfnc.org">Cloud Native Computing Foundation</a> as a <a href="https://www.cncf.io/blog/2018/08/28/cncf-to-host-tikv-in-the-sandbox/">Sandbox project</a> in August, 2018.</p>
+<p>TiKV is fully <a href="https://en.wikipedia.org/wiki/ACID_(computer_science)">ACID</a> compliant and features automatic horizontal scalability, global data consistency, geo-replication, and many other features. It can be used as a building block for other high-level services. For example, we have already used TiKV to support <a href="https://github.com/pingcap/tidb">TiDB</a> - a next-generation <a href="https://en.wikipedia.org/wiki/Hybrid_transactional/analytical_processing_(HTAP)">HTAP</a> database.</p>
+<p>In this book, we will introduce everything about TiKV, including why we built it and how we continue to improve it, what problems we have met, what the core technologies are and why, etc. We hope that through this book, you can develop a deep understanding of TiKV, build your knowledge of distributed programming, or even get inspired to build your own distributed system. :-)</p>
+<a class="header" href="#history" id="history"><h2>History</h2></a>
+<p>In the middle of 2015, we decided to build a database which solved MySQL's scaling problems. At that time, the most common way to increase MySQL's scalability was to build a proxy on top of MySQL that distributes the load more efficiently, but we don't think that's the best way.</p>
+<p>As far as we knew, proxy-based solutions have following problems:</p>
+<ul>
+<li>Building a proxy on top of the MySQL servers cannot guarantee ACID compliance. Notably, the cross-node transactions are not supported natively.</li>
+<li>It poses great challenges for business flexibility because the users have to worry about the data distribution and design their sharding keys carefully to avoid inefficient queries.</li>
+<li>The high availability and data consistency of MySQL can't be guaranteed easily based on the traditional Master-Slave replication.</li>
+</ul>
+<p>Although building a proxy based on MySQL directly might be easy at the beginning, we still decided to chose another way, a more difficult path — to build a distributed, MySQL compatible database from scratch.</p>
+<p>Fortunately, Google met the same problem and had already published some papers to describe how they built <a href="http://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf">Spanner</a> and <a href="https://storage.googleapis.com/pub-tools-public-publication-data/pdf/41344.pdf">F1</a> to solve it. Spanner is a globally distributed, externally consistent database and F1 is a distributed SQL database based on Spanner. Inspired by Spanner and F1, we knew we could do the same thing. So we started to build TiDB - a stateless MySQL layer like F1. After we released TiDB, we knew we needed an underlying Spanner-like database so we began to develop TiKV.</p>
+<a class="header" href="#architecture" id="architecture"><h2>Architecture</h2></a>
+<p>Following is the architecture of TiKV:</p>
+<p><img src="../overview/architecture.png" alt="Architecture" /></p>
+<p>In this illustration there are three TiKV instances in the cluster and each instance uses one <a href="https://github.com/facebook/rocksdb">RocksDB</a> to save data. On top of RocksDB, we use the <a href="https://raft.github.io/">Raft</a> consensus algorithm to replicate the data. In practice we use at least three replicas to keep data safe and consistent, and these replicas form a Raft group.</p>
+<p>We use the traditional <a href="https://en.wikipedia.org/wiki/Multiversion_concurrency_control">MVCC</a> mechanism and build a distributed transaction layer above the Raft layer. We also provide a Coprocessor framework so users can push down their computing logic to the storage layer.</p>
+<p>All the network communications are through <a href="https://grpc.io/">gRPC</a> so that contributors can develop their own clients easily.</p>
+<p>The whole cluster is managed and scheduled by a central service — <a href="https://github.com/pingcap/pd">Placement Driver(PD)</a>.</p>
+<p>As you can see, the hierarchy of TiKV is clear and easy to understand, and we will give more detailed explanation later.</p>
+<!-- Redirect to the overview page if on home, otherwise the image won't work on one of the following: local index, prod index, prod chapter -->
+<script>
+    if (window.location.pathname == "/deep-dive-tikv/" || window.location.pathname == "/") {
+        window.location.replace("overview/introduction.html");
+    }
+</script>
+<a class="header" href="#consensus-algorithm" id="consensus-algorithm"><h1>Consensus Algorithm</h1></a>
+<p>When building a distributed system one principal goal is often to build in fault-tolerance. That is, if one particular node in a network goes down, or if there is a network partition, the systems continues to operate. The cluster of nodes taking part in a distributed consensus protocol must come to agreement regarding values, and once that decision is reached, that choice is final, even if some nodes were in a faulty state at the time.</p>
+<p>Distributed consensus algorithms often take the form of a replicated state machine and log. Each state machine accepts inputs from its log, and represents the value(s) to be replicated, for example, a change to a hash table. They allow a collection of machines to work as a coherent group that can survive the failures of some of its members.</p>
+<p>Two well known distributed consensus algorithms are <a href="https://lamport.azurewebsites.net/pubs/paxos-simple.pdf">Paxos</a> and <a href="https://raft.github.io/raft.pdf">Raft</a>. Paxos is used in systems like <a href="http://research.google.com/archive/chubby.html">Chubby</a> by Google, and Raft is used in systems like <a href="https://github.com/tikv/tikv">TiKV</a> or <a href="https://github.com/coreos/etcd/tree/master/raft">etcd</a>. Raft is generally seen as a more understandable and simpler to implement than Paxos.</p>
+<p>In TiKV we harness Raft for distributed consensus. We found it much easier to understand both the algorithm, and how it will behave in even truly perverse scenarios.</p>
+<a class="header" href="#consistency-availability--partitioning" id="consistency-availability--partitioning"><h1>Consistency, Availability, &amp; Partitioning</h1></a>
+<p>In 2000, Eric Brewer presented <a href="http://awoc.wolski.fi/dlib/big-data/Brewer_podc_keynote_2000.pdf">“Towards Robust Distributed Systems”</a> which detailed the CAP Theorem. Succinctly, the theorem declares that a distributed system may only choose two of the following three attributes:</p>
+<ul>
+<li><strong>Consistency:</strong> Every read receives the most recent write or an error</li>
+<li><strong>Availability:</strong> Every request receives a (non-error) response – without necessarily considering the most recent write</li>
+<li><strong>Partitioning:</strong> The system continues to operate despite an arbitrary number of messages being dropped (or delayed) between nodes</li>
+</ul>
+<p>Traditional RDBMS, like <a href="https://www.postgresql.org/">PostgreSQL</a>, that provide <a href="http://jimgray.azurewebsites.net/papers/thetransactionconcept.pdf">ACID</a> guarantees, favor consistency over availability. BASE (Basic Availability, Soft-state, Eventual consistency)  systems, like MongoDB and other NoSQL systems, favor availability over consistency.</p>
+<p>In 2012, Daniel Abadi proposed that CAP was not sufficient to describe the trade-offs which occur when choosing the attributes of a distributed system. They described an expanded <a href="http://cs-www.cs.yale.edu/homes/dna/papers/abadi-pacelc.pdf">PACELC</a> Theorem:</p>
+<blockquote>
+<p>Availability (A) and consistency (C) (as per the CAP theorem), but else (E), even when the system is running normally in the absence of partitions, one has to choose between latency (L) and consistency (C).</p>
+</blockquote>
+<p>In order to support greater availability of data, most systems will replicate data between multiple peers. The system may also replicate a write ahead log offsite. In order to fulfill these availability guarantees the system must ensure a certain number of replications have occured before confirming an action. <strong>More replication means more consistency but also more latency.</strong></p>
+<a class="header" href="#byzantine-failure" id="byzantine-failure"><h1>Byzantine Failure</h1></a>
+<p>Consensus algorithms are typically either <em>Byzantine Fault Tolerant</em>, or not. Succinctly, systems which can withstand Byzantine faults are able to withstand misbehaving peers. Most distributed systems you would use inside of a VLAN, such as Kafka, TiKV, and etcd, are not Byzantine Fault Tolerant.</p>
+<p>In order to withstand Byzantine faults, the system must tolerate peers:</p>
+<ul>
+<li>actively spreading incorrect information,</li>
+<li>deliberately not spreading correct information,</li>
+<li>modifying information that would otherwise be correct.</li>
+</ul>
+<p>This extends far beyond situations where the network link degrades and starts corrupting packets at the TCP layer. Those kinds of issues are easily tractable compared to a system being able to withstand active internal subversion.</p>
+<p>In order to better understand Byzantine Fault Tolerance it helps to imagine the Byzantine Generals Problem:</p>
+<blockquote>
+<p>Several Byzantine generals and their armies have surrounded an enemy army inside a deep forest. Separate, they are not strong enough to defeat the enemy, but if they attack in a coordinated fashion they will succeed. They must all agree on a time to attack the enemy.</p>
+<p>In order to communicate, the generals can send messengers through the forest. These messages may or may not reach their destination. They could be kidnapped and replaced with imposters, converted to the enemy cause, or outright killed.</p>
+<p>How can the generals confidently coordinate a time to attack?</p>
+</blockquote>
+<p>After thinking on the problem for a time, you can conclude that tackling such a problem introduces a tremendous amount of complexity and overhead to a system.</p>
+<p>Separating Byzantine tolerant systems from non-tolerant systems helps with evaluation of systems. A non-tolerant system will almost always outperform a tolerant system.</p>
+<a class="header" href="#paxos" id="paxos"><h1>Paxos</h1></a>
+<p>Paxos is a protocol that Leslie Lamport and others have written extensively about. The most succinct paper describing Paxos is <a href="https://lamport.azurewebsites.net/pubs/paxos-simple.pdf">&quot;Paxos Made Easy&quot;</a> published by Lamport in 2001. The original paper <a href="http://lamport.azurewebsites.net/pubs/pubs.html#lamport-paxos">&quot;The Part-Time Parliment&quot;</a> was published in 1989.</p>
+<p>Paxos defines several roles, and each node in a cluster may perform in one or many roles. Each cluster has a <strong>single eventually chosen leader</strong>, and then some number of <strong>learners</strong> (which take action on the agreed upon request), <strong>Acceptors</strong> (which form quorums and act as &quot;memory&quot;), and <strong>proposers</strong> (which advocate for client requests and coordinate).</p>
+<p>Unlike Raft, which represents a relatively concrete protocol, Paxos represents a <em>family</em> of protocols. Each variant has different tradeoffs.</p>
+<p>A few variants of Paxos:</p>
+<ul>
+<li>Basic Paxos: The basic protocol, allowing consensus about a single value.</li>
+<li>Multi Paxos: Allow the protocol to handle a stream of messages with less overhead than Basic Paxos.</li>
+<li><a href="https://lamport.azurewebsites.net/pubs/web-dsn-submission.pdf"><strong>Cheap Paxos</strong></a>: Reduce number of nodes needed via dynamic reconfiguration in exchange for reduced burst fault tolerance.</li>
+<li><a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-112.pdf"><strong>Fast Paxos</strong></a>: Reduce the number of round trips in exchange for reduced fault tolerance.</li>
+<li><a href="http://pmg.csail.mit.edu/papers/osdi99.pdf"><strong>Byzantine Paxos</strong></a>: Withstanding Byzantine failure scenarios.</li>
+<li><a href="https://raft.github.io/raft.pdf"><strong>Raft</strong></a>: Described in the next chapter.</li>
+</ul>
+<p>It has been noted in the industry that Paxos is notoriously difficult to learn. Algorithms such as Raft are designed deliberately to be more easy to understand.</p>
+<p>Due to complexities in the protocol, and the range of possibilities, it can be difficult to ascertain the state of a system when things go wrong (or are going right).</p>
+<p>The basic Paxos algorithm itself does not define things like how to handle leader failures or membership changes.</p>
+<a class="header" href="#raft" id="raft"><h1>Raft</h1></a>
+<p>In 2014, Diego Ongaro and John Ousterhout presented the Raft algorithm. It is explained succinctly in a <a href="https://raft.github.io/raft.pdf">paper</a> and detailed at length in a <a href="https://ramcloud.stanford.edu/%7Eongaro/thesis.pdf">thesis</a>.</p>
+<p>Raft defines a strong, single leader and number of followers in a group of peers. The group represents a <strong>replicated state machine</strong>. Only the leader may service client requests. The leader replicates actions to the followers.</p>
+<p>Each peer has a <strong>durable write ahead log</strong>. All peers append each action as an entry in the log immediately as they recieve it. When the quorum (the majority) of peers have confirmed that that the entry exists in their log, the leader commits the log, each peer then can apply the action to their state machine.</p>
+<p>Raft guarantees <strong>strong consistency</strong> by having only one ‘leader’ of the group which services all requests.  All requests are then replicated to a quorum before being acted on, then confirmed with the requester. From the perspective of the cluster, the leader always has an up to date state machine.</p>
+<p>The group is <strong>available</strong> when a majority of peers are able to coordinate. If the group is partitioned, only a partition containing the majority of the group can recover and resume servicing requests. If the cluster is split into three equal subgroups, for example, none of the subgroups will recover and service requests.</p>
+<p>Raft supports <strong>leader elections</strong>. If the group leader fails, one of the followers will be elected the new leader. It’s not possible for a stale leader to be elected. If a leader candidate is aware of requests which the other peers of a particular subgroup are not, it will be elected over those peers. Since only the majority of peers can form a quorum this means that in order to be elected a peer must be up to date.</p>
+<p>Because of how leader elections work, Raft is not Byzantine fault tolerant. Any node is able to lie and subvert the cluster by starting an election and claiming to have log entries it didn’t have.</p>
+<p>It’s possible to support actions such as changing the peer group’s membership, or replicating log entries to non-voting followers (learners). In addition, several optimizations can be applied to Raft. Prevote can be used to introduce a pre-election by possible leaders, allowing them to gauge their ability to become a leader before potentially disrupting a cluster. Joint Consensus can support arbitrary group changes, allowing for better scaling. Batching and pipelining can help high throughput systems perform better.</p>
+<a class="header" href="#key-value-engine" id="key-value-engine"><h1>Key-Value Engine</h1></a>
+<p>A key-value engine serves as the bottommost layer in a key-value
+database, unless you are going to build your own file system or
+operating system. A key-value engine is crucial for a database because
+it manages all the persistent data directly.</p>
+<p>Most key-value engines provide some common interfaces like <code>Get</code>,
+<code>Put</code> and <code>Delete</code>. Some engines also allow you to iterate the
+key-values in order efficiently, and most will provide special
+features for added efficiency.</p>
+<p>Choosing a key value engine is the first step to build a
+database. Here are some important things we need to consider:</p>
+<ul>
+<li><em>The data structure</em>. Different data structures are optimized for
+different workloads. Some are good for reads and some are good for
+writes, etc.</li>
+<li><em>Maturity</em>. We don't need a storage engine to be fancy but we want it
+to be reliable. Buggy engines ruin everything you build on top of
+them. We recommend using a battle-tested storage engine which has
+been adopted by a lot of users.</li>
+<li><em>Performance</em>. The performance of the storage engine limits the
+overall performance of the whole database. So make sure the storage
+engine meets your expectation and has the potential to improve along
+with the database.</li>
+</ul>
+<p>In this chapter, we will do a comparison between two well-known data
+structures and guide you through the storage engine used in TiKV.</p>
+<a class="header" href="#b-tree-vs-log-structured-merge-tree" id="b-tree-vs-log-structured-merge-tree"><h1>B-Tree vs Log-Structured Merge-Tree</h1></a>
+<p>The <a href="https://en.wikipedia.org/wiki/B-tree">B-tree</a> and the <a href="https://en.wikipedia.org/wiki/Log-structured_merge-tree">Log-Structured Merge-tree</a> (LSM-tree) are the two most widely used data structures for data-intensive applications to organize and store data. However, each of them has its own advantages and disadvantages. This article aims to use quantitative approaches to compare these two data structures.</p>
+<a class="header" href="#metrics" id="metrics"><h2>Metrics</h2></a>
+<p>In general, there are three critical metrics to measure the performance of a data structure: write amplification, read amplification, and space amplification. This section aims to describe these metrics.</p>
+<p>For hard disk drives (HDDs), the cost of disk seek is enormous, such that the performance of random read/write is worse than that of sequential read/write. This article assumes that flash-based storage is used so we can ignore the cost of disk seeks.</p>
+<a class="header" href="#write-amplification" id="write-amplification"><h3>Write Amplification</h3></a>
+<p><em>Write amplification</em> is the ratio of the amount of data written to the storage device versus the amount of data written to the database.</p>
+<p>For example, if you are writing 10 MB to the database and you observe 30 MB disk write rate, your write amplification is 3.</p>
+<p>Flash-based storage can be written to only a finite number of times, so write amplification will decrease the flash lifetime.</p>
+<p>There is another write amplification associated with flash memory and SSDs because flash memory must be erased before it can be rewritten.</p>
+<a class="header" href="#read-amplification" id="read-amplification"><h3>Read Amplification</h3></a>
+<p><em>Read amplification</em> is the number of disk reads per query.</p>
+<p>For example, if you need to read 5 pages to answer a query, read amplification is 5.</p>
+<p>Note that the units of write amplification and read amplification are different. Write amplification measures how much more data is written than the application thought it was writing, whereas read amplification counts the number of disk reads to perform a query.</p>
+<p>Read amplification is defined separately for point query and range queries. For range queries the range length matters (the number of rows to be fetched).</p>
+<p>Caching is a critical factor for read amplification. For example, with a B-tree in the cold-cache case, a point query requires \(O(log_BN)\) disk reads, whereas in the warm-cache case the internal nodes of the B-tree are cached, and so a B-tree requires at most one disk read per query.</p>
+<a class="header" href="#space-amplification" id="space-amplification"><h3>Space Amplification</h3></a>
+<p><em>Space amplification</em> is the ratio of the amount of data on the storage device versus the amount of data in the database.</p>
+<p>For example, if you put 10MB in the database and this database uses 100MB on the disk, then the space amplification is 10.</p>
+<p>Generally speaking, a data structure can optimize for at most two from read, write, and space amplification. This means one data structure is unlikely to be better than another at all three. For example a B-tree has less read amplification than an LSM-tree while an LSM-tree has less write amplification than a B-tree.</p>
+<a class="header" href="#analysis" id="analysis"><h2>Analysis</h2></a>
+<p>The B-tree is a generalization of <a href="https://en.wikipedia.org/wiki/Binary_search_tree">binary search tree</a> in which a node can have more than two children. There are two kinds of node in a B-tree, internal nodes, and leaf nodes. A leaf node contains data records and has no children, whereas an internal node can have a variable number of child nodes within some pre-defined range. Internal nodes may be joined or split. An example of a B-tree appears in <em>Figure 1</em>.</p>
+<p><img src="B_tree.png" alt="Figure 1" /></p>
+<blockquote>
+<p>Figure 1. The root node is shown at the top of the tree, and in this case happens to contain a single pivot (20), indicating that records with key k where k ≤ 20 are stored in the first child, and records with key k where k &gt; 20 are stored in the second child. The first child contains two pivot keys (11 and 15), indicating that records with key k where k ≤ 11 is stored in the first child, those with 11 &lt; k ≤ 15 are stored in the second child, and those with k &gt; 15 are stored in the third child. The leftmost leaf node contains three values (3, 5, and 7).</p>
+</blockquote>
+<p>The term B-tree may refer to a specific design or a general class of designs. In the narrow sense, a B-tree stores keys in its internal nodes but need not store those keys in the records at the leaves. The <a href="https://en.wikipedia.org/wiki/B%2B_tree">B+ tree</a> is one of the most famous variations of B-tree. The idea behind the B+ tree is that internal nodes only contain keys, and an additional level which contains values is added at the bottom with linked leaves.</p>
+<p>Like other search trees, an LSM-tree contains key-value pairs. It maintains data in two or more separate components (sometimes called <code>SSTable</code>s), each of which is optimized for its respective underlying storage medium; the data in the low level component is efficiently merged with the data in the high level component in batches. An example of LSM-tree appears in <em>Figure 2</em>.</p>
+<p><img src="LSM_Tree.png" alt="Figure 2" /></p>
+<blockquote>
+<p>Figure 2. The LSM-tree contains \(k\) components. Data starts in \(C_0\), then gets merged into the \(C_1\). Eventually the \(C_1\) is merged into the \(C_2\), and so forth.</p>
+</blockquote>
+<p>An LSM-tree periodically performs <em>compaction</em> to merge several <code>SSTable</code>s into one new <code>SSTable</code> which contains only the live data from the input <code>SSTable</code>s. Compaction helps the LSM-tree to recycle space and reduce read amplification. There are two kinds of <em>compaction strategy</em>: Size-tiered compaction strategy (STCS) and Level-based compaction strategy (LBCS). The idea behind STCS is to compact small <code>SSTable</code>s into medium <code>SSTable</code>s when the LSM-tree has enough small <code>SSTable</code>s and compact medium <code>SSTable</code>s into large <code>SSTable</code>s when LSM-tree has enough medium <code>SSTable</code>s. The idea of LBCS is to organize data into levels and each level contains one sorted run. Once a level accumulates enough data, some of the data at this level will be compacted to the higher level.</p>
+<p>This section discusses the write amplification and read amplification of B+tree and Level-Based LSM-tree.</p>
+<a class="header" href="#b-tree" id="b-tree"><h3>B+ Tree</h3></a>
+<p>In the B+ tree, copies of the keys are stored in the internal nodes; the keys and records are stored in leaves; in addition, a leaf node may include a pointer to the next leaf node to increase sequential access performance.</p>
+<p>To simplify the analysis, assume that the block size of the tree is \(B\) measured in bytes, and keys, pointers, and records are constant size, so that each internal node contains \(O(B)\) children and each leaf contains \(O(B)\) data records. (The root node is a special case, and can be nearly empty in some situations.) Under all these assumptions, the depth of a B+ tree is
+$$
+O(log_BN/B)
+$$
+where \(N\) is the size of the database.</p>
+<a class="header" href="#write-amplification-1" id="write-amplification-1"><h4>Write Amplification</h4></a>
+<p>For the worst-case insertion workloads, every insertion requires writing the leaf block containing the record, so the write amplification is \(B\).</p>
+<a class="header" href="#read-amplification-1" id="read-amplification-1"><h4>Read Amplification</h4></a>
+<p>The number of disk reads per query is at most \(O(log_BN/B)\), which is the depth of the tree.</p>
+<a class="header" href="#level-based-lsm-tree" id="level-based-lsm-tree"><h3>Level-Based LSM-tree</h3></a>
+<p>In the Level-based LSM-tree, data is organized into levels. Each level contains one sorted run. Data starts in level 0, then gets merged into the level 1 run. Eventually the level 1 run is merged into the level 2 run, and so forth. Each level is constrained in its sizes. Growth factor \(k\) is specified as the magnification of data size at each level.</p>
+<p>$$
+level_i = level_{i-1} * k
+$$
+We can analyze the Level-based LSM-tree as follows. If the growth factor is \(k\) and the smallest level is a single file of size \(B\), then the number of levels is</p>
+<p>$$
+Θ(log_kN/B)
+$$
+where \(N\) is the size of the database. In order to simplify the analysis, we assume that database size is stable and grows slowly over time, so that the size of database will be nearly equal to the size of last level.</p>
+<a class="header" href="#write-amplification-2" id="write-amplification-2"><h4>Write Amplification</h4></a>
+<p>Data must be moved out of each level once, but data from a given level is merged repeatedly with data from the previous level. On average, after being first written into a level, each data item is remerged back into the same level about \(k/2\) times. So the total write amplification is
+$$
+Θ(k*log_kN/B)
+$$</p>
+<a class="header" href="#read-amplification-2" id="read-amplification-2"><h4>Read Amplification</h4></a>
+<p>To perform a short range query in the cold cache case, we must perform a binary search
+on each of the levels.</p>
+<p>For the highest \(level_i\), the data size is \(O(N)\), so that it performs \(O(logN/B)\) disk reads.</p>
+<p>For the previous \(level_{i-1}\), the data size is \(O(N/k)\), so that it performs \(O(log(N/(kB))\) disk reads.</p>
+<p>For \(level_{i-2}\), the data size is \(O(N/k^2)\), so that it performs \(O(log(N/k^2B)\) disk reads.</p>
+<p>…</p>
+<p>For \(level_{i-n}\), the data size is \(O(N/k^n)\), so that it performs \(O(log(N/k^nB)\) disk reads.</p>
+<p>So that the total number of disk reads is</p>
+<p>$$
+R = O(logN/B) + O(log(N/(kB)) + O(log(N/k^2B) + ... + O(log(N/k^nB) + 1 = O((log^2N/B)/logk)
+$$</p>
+<a class="header" href="#summary" id="summary"><h2>Summary</h2></a>
+<p>The following table shows the summary of various kinds of amplification:</p>
+<table><thead><tr><th align="center">    Data Structure    </th><th align="center"> Write Amplification </th><th align="center">    Read Amplification    </th></tr></thead><tbody>
+<tr><td align="center">       B+ tree        </td><td align="center">     \(Θ(B)\)      </td><td align="center">    \(O(log_BN/B)\)     </td></tr>
+<tr><td align="center"> Level-Based LSM-tree </td><td align="center"> \(Θ(klog_kN/B)\)  </td><td align="center"> \(Θ((log^2N/B)/logk)\) </td></tr>
+</tbody></table>
+<blockquote>
+<p>Table 1. A summary of the write amplification and read amplification for range queries.</p>
+</blockquote>
+<p>Through comparing various kinds of amplification between B+ tree and Level-based LSM-tree, we can come to a conclusion that Level-based LSM-tree has a better write performance than B+ tree while its read performance is not as good as B+ tree. The main purpose for TiKV to use LSM-tree instead of B-tree as its underlying storage engine is because using cache technology to promote read performance is much easier than promote write performance.</p>
+<a class="header" href="#rocksdb" id="rocksdb"><h1>RocksDB</h1></a>
+<p>RocksDB is a persistent key-value store for fast storage environment.
+Here are some highlight features from RocksDB:</p>
+<ol>
+<li>RocksDB uses a log structured database engine, written entirely in
+C++, for maximum performance. Keys and values are just
+arbitrarily-sized byte streams.</li>
+<li>RocksDB is optimized for fast, low latency storage such as flash
+drives and high-speed disk drives. RocksDB exploits the full
+potential of high read/write rates offered by flash or RAM.</li>
+<li>RocksDB is adaptable to different workloads. From database storage
+engines such as MyRocks to application data caching to embedded
+workloads, RocksDB can be used for a variety of data needs.</li>
+<li>RocksDB provides basic operations such as opening and closing a
+database, reading and writing to more advanced operations such as
+merging and compaction filters.</li>
+</ol>
+<p>TiKV uses RocksDB because RocksDB is mature and high-performance. In
+this section, we will explore how TiKV uses RocksDB. We won't talk
+about basic features like <code>Get</code>, <code>Put</code>, <code>Delete</code>, and <code>Iterate</code> here
+because their usage is simple and clear and works well too. Instead,
+we'll focus some special features used in TiKV below.</p>
+<a class="header" href="#a-hrefhttpsgithubcomfacebookrocksdbwikirocksdb-bloom-filterprefix-bloom-filtera" id="a-hrefhttpsgithubcomfacebookrocksdbwikirocksdb-bloom-filterprefix-bloom-filtera"><h2><a href="https://github.com/facebook/rocksdb/wiki/RocksDB-Bloom-Filter">Prefix Bloom Filter</a></h2></a>
+<p>A Bloom Filter is a magical data structure that uses a little resource
+but helps a lot. We won't explain the whole algorithm here. If you are
+not familiar with Bloom Filters, you can think it as a black box
+inside a dataset, which can tell you if a key <em>probably</em> exists or
+<em>definitely</em> does not without actually searching the
+dataset. Sometimes Bloom Filter gives you a false-positive answer
+although it rarely happens.</p>
+<p>TiKV uses a Bloom Filter as well as a variant which is called Prefix
+Bloom Filter (PBF). Instead of telling you if a whole key exists in a
+dataset or not, PBF tells you if there are some other keys with the
+same prefix exists. Since PBF only stores the unique prefixes instead
+of all unique whole keys, it can save some memory too with the down
+side of having larger false positive rate.</p>
+<p>TiKV supports MVCC, which means that there can be multiple versions
+for the same row stored in RocksDB. All versions of the same row share
+the same prefix (the row key) but have different timestamps as a suffix. When
+we want to read a row, we usually don't know about the exact version
+to read, but only want to read the latest version at a specific
+timestamp. This is where PBF shines. PBF can filter out data which is
+impossible to contain keys with the same prefix as the row key we
+provided. Then we just need to search in the data that may contain
+different versions of the row key and locate the specific version we
+want.</p>
+<a class="header" href="#tableproperties" id="tableproperties"><h2>TableProperties</h2></a>
+<p>RocksDB allows us to register some table properties collectors.  When
+RocksDB builds an SST file, it passes the sorted key-values one by one
+to the callback of each collector so that we can collect whatever we
+want. Then when the SST file is finished, the collected properties
+will be stored inside the SST file too.</p>
+<p>We use this feature to optimize two functionalities.</p>
+<p>The first one is for Split Check. Split check is a worker to check if
+regions are large enough to split.  We have to scan all the data
+within a region to calculate the size of the region at the original
+implementation, which is resource consuming. With the <code>TableProperties</code>
+feature, we record the size of small sub-ranges in each SST file so
+that we can calculate the approximate size of a region from the table
+properties without scanning any data at all.</p>
+<p>Another one is for MVCC Garbage Collection (GC). GC is a process to
+clean up garbage versions (versions older than the configured
+lifetime) of each row. If we have no idea whether a region contains
+some garbage versions or not, we have to check all regions
+periodically. To skip unnecessary garbage collection, we record some
+MVCC statistics (e.g. the number of rows and the number of versions)
+in each SST file. So before checking every region row by row, we check
+the table properties to see if it is necessary to do garbage
+collection on a region.</p>
+<a class="header" href="#compactrange" id="compactrange"><h2>CompactRange</h2></a>
+<p>From time to time, some regions may contain a lot of tombstone entries
+because of GC or other delete operations. Tombstone entries are not
+good for scan performance and waste disk space as well.</p>
+<p>So with the <code>TableProperties</code> feature, we can check every region
+periodically to see if it contains a lot of tombstones. If it does, we
+will compact the region range manually to drop tombstone entries and
+release disk space.</p>
+<p>We also use <code>CompactRange</code> to recover RocksDB from some mistakes like
+incompatible table properties across different TiKV versions.</p>
+<a class="header" href="#a-hrefhttpsgithubcomfacebookrocksdbwikieventlistenereventlistenera" id="a-hrefhttpsgithubcomfacebookrocksdbwikieventlistenereventlistenera"><h2><a href="https://github.com/facebook/rocksdb/wiki/EventListener">EventListener</a></h2></a>
+<p><code>EventListener</code> allows us to listen to some special events, like
+flush, compaction or write stall condition change. When a specific
+event is triggered or finished, RocksDB will invoke our callbacks with
+some information about the event.</p>
+<p>TiKV listens to the compaction event to observe the region size
+changes. As mentioned above, we calculate the approximate size of each
+region from the table properties. The approximate size will be
+recorded in the memory so that we don't need to calculate it again and
+again if nothing has changed. However, during compactions, some
+entries are dropped so the approximate size of some regions should be
+updated. That's why we listen to the compaction events and recalculate
+the approximate size of some regions when necessary.</p>
+<a class="header" href="#a-hrefhttpsgithubcomfacebookrocksdbwikicreating-and-ingesting-sst-filesingestexternalfilea" id="a-hrefhttpsgithubcomfacebookrocksdbwikicreating-and-ingesting-sst-filesingestexternalfilea"><h2><a href="https://github.com/facebook/rocksdb/wiki/Creating-and-Ingesting-SST-files">IngestExternalFile</a></h2></a>
+<p>RocksDB allows us to generate an SST file outside and then ingest the
+file into RocksDB directly. This feature can potentially save a lot of
+IO because RocksDB is smart enough to ingest a file to the bottom
+level if possible, which can reduce write amplification because the
+ingested file doesn't need to be compacted again and again.</p>
+<p>We use this feature to handle Raft snapshot. For example, when we want
+to add a replica to a new server. We can first generate a snapshot
+file from another server and then send the file to the new
+server. Then the new server can ingest that file into its RocksDB
+directly, which saves lots of work!</p>
+<p>We also use this feature to import a huge amount of data into TiKV. We
+have some tools to generate sorted SST files from different data
+sources and then ingest those files into different TiKV servers. This
+is super fast compared to writing key-values to a TiKV cluster in the
+usual way.</p>
+<a class="header" href="#deletefilesinrange" id="deletefilesinrange"><h2>DeleteFilesInRange</h2></a>
+<p>Previously, TiKV used the straightforward way to delete a range of data,
+which is scanning all the keys in the range and then delete them one
+by one. However, disk space would not release until the tombstones have
+been compacted. Even worse, disk space usage will actually increase
+temporarily because of newly written tombstones.</p>
+<p>As time goes on, users store more and more data in TiKV until their
+disk space is insufficient. Then users will try to drop some tables or
+add more stores and expect the disk space usage to decrease in a short
+time. But TiKV didn't meet expectations with this method. We first tried
+to solve this by using the <code>DeleteRange</code> feature in RocksDB. However,
+<code>DeleteRange</code> turns out to be unstable and can not release disk space
+fast enough.</p>
+<p>A faster way to release disk space is to delete some files directly,
+which leads us to the <code>DeleteFilesInRange</code> feature. But this feature
+is not perfect, it is quite dangerous because it breaks the snapshot
+consistency. If you acquire a snapshot from RocksDB,
+use <code>DeleteFilesInRange</code> to delete some files, then try to read that data
+you will find that some of it is missing. So we
+should use this feature carefully.</p>
+<p>TiKV uses <code>DeleteFilesInRange</code> to destroy tombstone regions and GC
+dropped tables. Both cases have a prerequisite that the dropped range
+must not be accessed anymore.</p>
+<a class="header" href="#introduction-1" id="introduction-1"><h1>Introduction</h1></a>
+<p>As TiKV is a distributed transactional key-value database, transaction is a core feature of TiKV. In this chapter we will talk about general implementations of distributed transaction and some implementation details in TiKV.</p>
+<p>A database transaction, by definition, must be atomic, consistent, isolated and durable. Database practitioners often refer to these properties of database transactions using the acronym ACID.</p>
+<p>Transactions provide an &quot;all-or-nothing&quot; proposition: each work-unit performed in a database must either complete in its entirety or have no effect whatsoever. Furthermore, the system must isolate each transaction from other transactions, results must conform to existing constraints in the database, and transactions that complete successfully must get written to durable storage.</p>
+<p>A distributed transaction is a database transaction in which two or more network hosts are involved. Usually, hosts provide transactional resources, while the transaction manager is responsible for creating and managing a global transaction that encompasses all operations against such resources. Distributed transactions, as any other transactions, must have all four ACID properties.</p>
+<p>A common algorithm for ensuring correct completion of a distributed transaction is the two-phase commit (2PC).</p>
+<p>TiKV adopts Google's Percolator transaction model, a variant of 2PC.</p>
+<a class="header" href="#isolation-level" id="isolation-level"><h2>Isolation Level</h2></a>
+<p>Isolation is one of the ACID (Atomicity, Consistency, Isolation, Durability) properties. It determines how transaction integrity is visible to other users and systems. For example, when a user is creating a Purchase Order and has created the header, but not the Purchase Order lines, is the header available for other systems/users (carrying out concurrent operations, such as a report on Purchase Orders) to see?</p>
+<p>A lower isolation level increases the ability of many users to access the same data at the same time, but increases the number of concurrency effects (such as dirty reads or lost updates) users might encounter. Conversely, a higher isolation level reduces the types of concurrency effects that users may encounter, but requires more system resources and increases the chances that one transaction will block another.</p>
+<p>Most DBMSs offer a number of transaction isolation levels, which control the degree of locking that occurs when selecting data. For many database applications, the majority of database transactions can be constructed to avoid requiring high isolation levels (e.g. SERIALIZABLE level), thus reducing the locking overhead for the system. The programmer must carefully analyze database access code to ensure that any relaxation of isolation does not cause software bugs that are difficult to find. Conversely, if higher isolation levels are used, the possibility of deadlock is increased, which also requires careful analysis and programming techniques to avoid.</p>
+<p>Since each isolation level is stronger than those below, in that no higher isolation level allows an action forbidden by a lower one, the standard permits a DBMS to run a transaction at an isolation level stronger than that requested (e.g., a &quot;Read committed&quot; transaction may actually be performed at a &quot;Repeatable read&quot; isolation level).</p>
+<p>The isolation levels defined by the ANSI/ISO SQL standard are listed as follows.</p>
+<a class="header" href="#serializable" id="serializable"><h3>Serializable</h3></a>
+<p>This is the highest isolation level.</p>
+<p>With a lock-based concurrency control DBMS implementation, serializability requires read and write locks (acquired on selected data) to be released at the end of the transaction. Also range-locks must be acquired when a SELECT query uses a ranged WHERE clause, especially to avoid the <a href="https://en.wikipedia.org/wiki/Isolation_(database_systems)#Phantom_reads">phantom reads phenomenon</a>.</p>
+<p>When using non-lock based concurrency control, no locks are acquired; however, if the system detects a write collision among several concurrent transactions, only one of them is allowed to commit. See <a href="#snapshot-isolation">snapshot isolation</a> for more details on this topic.</p>
+<p>Per the SQL-92 standard:</p>
+<blockquote>
+<p>The execution of concurrent SQL-transactions at isolation level SERIALIZABLE is guaranteed to be serializable. A serializable execution is defined to be an execution of the operations of concurrently executing SQL-transactions that produces the same effect as some serial execution of those same SQL-transactions. A serial execution is one in which each SQL-transaction executes to completion before the next SQL-transaction begins.</p>
+</blockquote>
+<a class="header" href="#repeatable-read" id="repeatable-read"><h3>Repeatable Read</h3></a>
+<p>In this isolation level, a lock-based concurrency control DBMS implementation keeps read and write locks (acquired on selected data) until the end of the transaction. However, range-locks are not managed, so phantom reads can occur.</p>
+<p>Write skew is possible at this isolation level, a phenomenon where two writes are allowed to the same column(s) in a table by two different writers (who have previously read the columns they are updating), resulting in the column having data that is a mix of the two transactions.</p>
+<p>Repeatable reads is the default isolation level for MySQL's InnoDB engine.</p>
+<a class="header" href="#read-committed" id="read-committed"><h3>Read Committed</h3></a>
+<p>In this isolation level, a lock-based concurrency control DBMS implementation keeps write locks (acquired on selected data) until the end of the transaction, but read locks are released as soon as the SELECT operation is performed (so the non-repeatable reads phenomenon can occur in this isolation level). As in the previous level, range-locks are not managed.</p>
+<p>Putting it in simpler words, read committed is an isolation level that guarantees that any data read is committed at the moment it is read. It simply restricts the reader from seeing any intermediate, uncommitted, 'dirty' read. It makes no promise whatsoever that if the transaction re-issues the read, it will find the same data; data is free to change after it is read.</p>
+<a class="header" href="#read-uncommitted" id="read-uncommitted"><h3>Read Uncommitted</h3></a>
+<p>This is the lowest isolation level. In this level, dirty reads are allowed, so one transaction may see not-yet-committed changes made by other transactions.</p>
+<a class="header" href="#snapshot-isolation" id="snapshot-isolation"><h3>Snapshot Isolation</h3></a>
+<p>We mentioned 4 different isolation levels above, but TiDB doesn’t adopt any of them. Instead, TiDB uses snapshot isolation as its default ioslation level. The main reason for it is that it allows better serializability, yet still avoids most of the concurrency anomalies that serializability avoids (but not always all).</p>
+<p>TiDB is not alone: snapshot isolation also has been adopted by major database management systems such as InterBase, Firebird, Oracle, MySQL, PostgreSQL, SQL Anywhere, MongoDB and Microsoft SQL Server (2005 and later).</p>
+<p>Snapshot isolation is a guarantee that all reads made in a transaction will see a consistent snapshot of the database, and the transaction itself will successfully commit only if no updates it has made conflict with any concurrent updates made since that snapshot.</p>
+<p>In practice snapshot isolation is implemented within multiversion concurrency control (MVCC), where generational values of each data item (versions) are maintained: MVCC is a common way to increase concurrency and performance by generating a new version of a database object each time the object is written, and allowing transactions' read operations of several last relevant versions (of each object). The prevalence of snapshot isolation has been seen as a refutation of the ANSI SQL-92 standard’s definition of isolation levels, as it exhibits none of the &quot;anomalies&quot; that the SQL standard prohibited, yet is not serializable (the anomaly-free isolation level defined by ANSI).</p>
+<p>A transaction executing under snapshot isolation appears to operate on a personal snapshot of the database, taken at the start of the transaction. When the transaction concludes, it will successfully commit only if the values updated by the transaction have not been changed externally since the snapshot was taken. Such a write-write conflict will cause the transaction to abort.</p>
+<p>In a write skew anomaly, two transactions (T1 and T2) concurrently read an overlapping data set (e.g. values V1 and V2), concurrently make disjoint updates (e.g. T1 updates V1, T2 updates V2), and finally concurrently commit, neither having seen the update performed by the other. Were the system serializable, such an anomaly would be impossible, as either T1 or T2 would have to occur &quot;first&quot;, and be visible to the other. In contrast, snapshot isolation permits write skew anomalies.</p>
+<p>As a concrete example, imagine V1 and V2 are two balances held by a single person, James. The bank will allow either V1 or V2 to run a deficit, provided the total held in both is never negative (i.e. V1 + V2 ≥ 0). Both balances are currently $100. James initiates two transactions concurrently, T1 withdrawing $200 from V1, and T2 withdrawing $200 from V2.</p>
+<p>If the database guaranteed serializable transactions, the simplest way of coding T1 is to deduct $200 from V1, and then verify that V1 + V2 ≥ 0 still holds, aborting if not. T2 similarly deducts $200 from V2 and then verifies V1 + V2 ≥ 0. Since the transactions must serialize, either T1 happens first, leaving V1 = -$100, V2 = $100, and preventing T2 from succeeding (since V1 + (V2 - $200) would be -$200), or T2 happens first and similarly prevents T1 from committing.</p>
+<p>If the database is under snapshot isolation (MVCC), however, T1 and T2 operate on private snapshots of the database: each deducts $200 from an account, and then verifies that the new total is zero, using the other account value that held when the snapshot was taken. Since neither update conflicts, both commit successfully, leaving V1 = V2 = -$100, and V1 + V2 = -$200.</p>
+<p>In TiDB, you can use <code>SELECT … FOR UPDATE</code> statement to avoid write skew anomaly. In this  case, TiDB will use locks to serialize writes together with MVCC to gain some of the performance gains and still support the stronger &quot;serializability&quot; level of isolation.</p>
+<a class="header" href="#distributed-algorithms" id="distributed-algorithms"><h1>Distributed Algorithms</h1></a>
+<a class="header" href="#two-phase-commit" id="two-phase-commit"><h2>Two-Phase Commit</h2></a>
+<p>In transaction processing, databases, and computer networking, the two-phase commit protocol (2PC) is a type of atomic commitment protocol (ACP). It is a distributed algorithm that coordinates all the processes that participate in a distributed atomic transaction, determining whether to commit or abort (rollback) the transaction. It is a specialized type of consensus protocol. The protocol achieves its goal even in many cases of temporary system failure (involving either process, network node, communication, etc. failures), and is thus widely used. However, it is not resilient to all possible failure scenarios, and in rare cases user (i.e. a system's administrator) intervention is needed to resolve failures. To aide in recovery from failure the protocol's participants log the protocol's states. Log records, which are typically slow to generate but survive failures, are used by the protocol's recovery procedures. Many protocol variants exist that primarily differ in logging strategies and recovery mechanisms. Though expected to be used infrequently, recovery procedures compose a substantial portion of the protocol, due to many possible failure scenarios to be considered and supported by the protocol.</p>
+<a class="header" href="#basic-algorithm-of-2pc" id="basic-algorithm-of-2pc"><h3>Basic Algorithm of 2PC</h3></a>
+<a class="header" href="#prepare-phase" id="prepare-phase"><h4><code>prepare</code> phase</h4></a>
+<p>The coordinator sends a <code>prepare</code> message to all cohorts and waits until it has received a reply from all cohorts.</p>
+<a class="header" href="#commit-phase" id="commit-phase"><h4><code>commit</code> phase</h4></a>
+<p>If the coordinator received an agreement message from all cohorts during the <code>prepare</code> phase, the coordinator sends a <code>commit</code> message to all the cohorts.</p>
+<p>If any cohort votes <code>No</code> during the <code>prepare</code> phase (or the coordinator's timeout expires), the coordinator sends a <code>rollback</code> message to all the cohorts.</p>
+<a class="header" href="#disadvantages-of-2pc" id="disadvantages-of-2pc"><h3>Disadvantages of 2PC</h3></a>
+<p>The greatest disadvantage of the two-phase commit protocol is that it is a blocking protocol. If the coordinator fails permanently, some cohorts will never resolve their transactions: after a cohort has sent an agreement message to the coordinator, it will block until a <code>commit</code> or <code>rollback</code> is received.</p>
+<p>For example, consider a transaction involving a coordinator <code>A</code> and the cohort <code>C1</code>. If <code>C1</code> receives a <code>prepare</code> message and responds to <code>A</code>, then <code>A</code> fails before sending <code>C1</code>
+either a <code>commit</code> or <code>rollback</code> message, then <code>C1</code> will block forever.</p>
+<a class="header" href="#2pc-practice-in-tikv" id="2pc-practice-in-tikv"><h3>2PC Practice in TiKV</h3></a>
+<p>In TiKV we adopt the <a href="https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36726.pdf">Percolator transaction model</a> which is a variant of two phase commit. To address the disadvantage of coordinator failures, percolator doesn't use any node as coordinator, instead it uses one of the keys involved in each transaction as a coordinator. We call the coordinating key the primary key, and the other keys secondary keys. Since each key has multiple replicas, and data is kept consistent between these replicas by using a consensus protocol (Raft in TiKV), one node's failure doesn't affect the accessibility of data. So Percolator can tolerate node fails permanently.</p>
+<a class="header" href="#three-phase-commit" id="three-phase-commit"><h2>Three-Phase Commit</h2></a>
+<p>Unlike the two-phase commit protocol (2PC), 3PC is non-blocking. Specifically, 3PC places an upper bound on the amount of time required before a transaction either commits or aborts. This property ensures that if a given transaction is attempting to commit via 3PC and holds some resource locks, it will release the locks after the timeout.</p>
+<a class="header" href="#1st-phase" id="1st-phase"><h4>1st phase</h4></a>
+<p>The coordinator receives a transaction request. If there is a failure at this point, the coordinator aborts the transaction. Otherwise, the coordinator sends a <code>canCommit?</code> message to the cohorts and moves to the waiting state.</p>
+<a class="header" href="#2nd-phase" id="2nd-phase"><h4>2nd phase</h4></a>
+<p>If there is a failure, timeout, or if the coordinator receives a <code>No</code> message in the waiting state, the coordinator aborts the transaction and sends an <code>abort</code> message to all cohorts. Otherwise the coordinator will receive <code>Yes</code> messages from all cohorts within the time window, so it sends <code>preCommit</code> messages to all cohorts and moves to the prepared state.</p>
+<a class="header" href="#3rd-phase" id="3rd-phase"><h4>3rd phase</h4></a>
+<p>If the coordinator succeeds in the prepared state, it will move to the commit state. However if the coordinator times out while waiting for an acknowledgement from a cohort, it will abort the transaction. In the case where an acknowledgement is received from the majority of cohorts, the coordinator moves to the commit state as well.</p>
+<p>A two-phase commit protocol cannot dependably recover from a failure of both the coordinator and a cohort member during the Commit phase. If only the coordinator had failed, and no cohort members had received a commit message, it could safely be inferred that no commit had happened. If, however, both the coordinator and a cohort member failed, it is possible that the failed cohort member was the first to be notified, and had actually done the commit. Even if a new coordinator is selected, it cannot confidently proceed with the operation until it has received an agreement from all cohort members, and hence must block until all cohort members respond.</p>
+<p>The three-phase commit protocol eliminates this problem by introducing the <code>Prepared-to-commit</code> state. If the coordinator fails before sending <code>preCommit</code> messages, the cohort will unanimously agree that the operation was aborted. The coordinator will not send out a <code>doCommit</code> message until all cohort members have acknowledged that they are <code>Prepared-to-commit</code>. This eliminates the possibility that any cohort member actually completed the transaction before all cohort members were aware of the decision to do so (an ambiguity that necessitated indefinite blocking in the two-phase commit protocol).</p>
+<a class="header" href="#disadvantages-of-3pc" id="disadvantages-of-3pc"><h3>Disadvantages of 3PC</h3></a>
+<p>The main disadvantage to this algorithm is that it cannot recover in the event the network is segmented in any manner. The original 3PC algorithm assumes a fail-stop model, where processes fail by crashing and crashes can be accurately detected, and does not work with network partitions or asynchronous communication.</p>
+<p>The protocol requires at least three round trips to complete. This potentially causes a long latency in order to complete each transaction.</p>
+<a class="header" href="#paxos-commit" id="paxos-commit"><h2>Paxos Commit</h2></a>
+<p>The Paxos Commit algorithm runs a Paxos consensus algorithm on the commit/abort decision of each participant to achieve a transaction commit protocol that uses 2F + 1 coordinators and makes progress if at least F + 1 of them are working properly. Paxos Commit has the same stable-storage write delay, and can be implemented to have the same message delay in the fault-free case, as Two-Phase Commit, but it uses more messages. The classic Two-Phase Commit algorithm is obtained as the special F = 0 case of the Paxos Commit algorithm.</p>
+<p>In the Two-Phase Commit protocol, the coordinator decides whether to abort or commit, records that decision in stable storage, and informs the cohorts of its decision. We could make that fault-tolerant by simply using a consensus algorithm to choose the committed/aborted decision, letting the cohorts be the client that proposes the consensus value. This approach was apparently first proposed by Mohan, Strong, and Finkelstein, who used a synchronous consensus protocol. However, in the normal case, the leader must learn that each cohort has prepared before it can try to get the value committed chosen. Having the cohorts tell the leader that they have prepared requires at least one message delay.</p>
+<a class="header" href="#pessimistic--optimistic-locking" id="pessimistic--optimistic-locking"><h1>Pessimistic &amp; Optimistic Locking</h1></a>
+<p>To prevent lost updates and dirty reads, locking is employed to manage the actions of multiple concurrent users on a database. The two types of locking are pessimistic locking and optimistic locking.</p>
+<a class="header" href="#pessimistic-locking" id="pessimistic-locking"><h2>Pessimistic Locking</h2></a>
+<p>A user who reads a record with the intention of updating it places an exclusive lock on the record to prevent other users from manipulating it. This means no one else can manipulate that record until the user releases the lock. The downside is that users can be locked out for a very long time, thereby slowing the overall system response and causing frustration.</p>
+<p>Pessimistic locking is mainly used in environments where write contention is heavy, where the cost of protecting data through locks is less than the cost of rolling back transactions if concurrency conflicts occur. Pessimistic concurrency is best implemented when lock times will be short, as in programmatic processing of records. Pessimistic concurrency requires a persistent connection to the database and is not a scalable option when users are interacting with data, because records might be locked for relatively large periods of time. It is not appropriate for use in web application development.</p>
+<a class="header" href="#optimistic-locking" id="optimistic-locking"><h2>Optimistic Locking</h2></a>
+<p>This allows multiple concurrent users access to the database whilst the system keeps a copy of the initial-read made by each user. When a user wants to update a record, the application first determines whether another user has changed the record since it was last read. The application does this by comparing the initial-read held in memory to the database record to verify any changes made to the record. Any discrepancies between the initial-read and the database record violates concurrency rules and causes the system to disregard any update request; an error message is reported and the user must start the update process again. It improves database performance by reducing the amount of locking required, thereby reducing the load on the database server. It works efficiently with tables that require limited updates since no users are locked out. However, some updates may fail. The downside is constant update failures due to high volumes of update requests from multiple concurrent users - it can be frustrating for users.</p>
+<p>Optimistic locking is appropriate in environments where there is low write contention for data, or where read-only access to data is required.</p>
+<a class="header" href="#practice-in-tikv" id="practice-in-tikv"><h2>Practice in TiKV</h2></a>
+<p>We use the Percolator Transaction model in TiKV, which uses an optimistic locking strategy. It reads database values, writes them tentatively, then checks whether other transactions have modified data that this transaction has used (read or written). This includes transactions that completed after this transaction's start time, and optionally, transactions that are still active at validation time. If there is no conflict, all changes take effect. If there is a conflict it is resolved, typically by aborting the transaction. In TiKV, the whole transaction is restarted with a new timestamp.</p>
+<a class="header" href="#timestamp-oracle" id="timestamp-oracle"><h1>Timestamp Oracle</h1></a>
+<p>The timestamp oracle plays a significant role in the Percolator Transaction model, it is a server that hands out timestamps in strictly increasing order, a property required for correct operation of the snapshot isolation protocol.</p>
+<p>Since every transaction requires contacting the timestamp oracle twice, this service must scale well. The timestamp oracle periodically allocates a range of timestamps by writing the highest allocated timestamp to stable storage; then with that allocated range of timestamps, it can satisfy future requests strictly from memory. If the timestamp oracle restarts, the timestamps will jump forward to the maximum allocated timestamp. Timestamps never go &quot;backwards&quot;.</p>
+<p>To save RPC overhead (at the cost of increasing transaction latency) each timestamp requester batches timestamp requests across transactions by maintaining only one pending RPC to the oracle. As the oracle becomes more loaded, the batching naturally increases to compensate. Batching increases the scalability of the oracle but does not affect the timestamp guarantees.</p>
+<p>The transaction protocol uses strictly increasing timestamps to guarantee that Get() returns all committed writes before the transaction’s start timestamp. To see how it provides this guarantee, consider a transaction R reading at timestamp TR and a transaction W that committed at timestamp TW &lt; TR; we will show that R sees W’s writes. Since TW &lt; TR, we know that the timestamp oracle gave out TW before or in the same batch as TR; hence, W requested TW before R received TR. We know that R can’t do reads before receiving its start timestamp TR and that W wrote locks before requesting its commit timestamp TW . Therefore, the above property guarantees that W must have at least written all its locks before R did any reads; R’s Get() will see either the fully committed write record or the lock, in which case W will block until the lock is released. Either way, W’s write is visible to R’s Get().</p>
+<p>In our system, the timestamp oracle has been embeded into Placement Driver (PD). PD is the management component with a &quot;God view&quot; and is responsible for storing metadata and conducting load balancing.</p>
+<a class="header" href="#practice-in-tikv-1" id="practice-in-tikv-1"><h2>Practice in TiKV</h2></a>
+<p>We use batching and preallocating techniques to increase the timestamp oracle's throughput, and also we use a Raft group to tolerate node failure, but there are still some disadvantages to allocating timestamps from a single node. One disadvantage is that the timestamp oracle can't be scaled to multiple nodes. Another is that when the current Raft leader fails, there is a gap wherein the system cannot allocate a  timestamp before a new leader has been elected. Finally, when the timestamp requestor is located at a remote datacenter the requestor must tolerate the high latency caused by the network round trip. There are some potential solutions for this final case, such as Google Spanner’s TrueTime mechanism and HLCs (Hybrid Logical Clocks).</p>
+<a class="header" href="#percolator" id="percolator"><h1>Percolator</h1></a>
+<p>TiKV supports distributed transactions, which is inspired by Google's <a href="https://ai.google/research/pubs/pub36726.pdf">Percolator</a>. In this section, we will briefly introduce Percolator and how we make use of it in TiKV.</p>
+<a class="header" href="#what-is-percolator" id="what-is-percolator"><h2>What is Percolator?</h2></a>
+<p><em>Percolator</em> is a system built by Google for incremental processing on a very large data set. Since this is just a brief introduction, you can view the full paper <a href="https://ai.google/research/pubs/pub36726#">here</a> for more details. If you are already very familiar with it, you can skip this section and go directly to <a href="#Percolator-in-TiKV">Percolator in TiKV</a></p>
+<p>Percolator is built based on Google's BigTable, a distributed storage system that supports single-row transactions. Percolator implements distributed transactions in ACID snapshot-isolation semantics, which is not supported by BigTable. A column <code>c</code> of Percolator is actually divided into the following internal columns of BigTable:</p>
+<ul>
+<li><code>c:lock</code></li>
+<li><code>c:write</code></li>
+<li><code>c:data</code></li>
+<li><code>c:notify</code></li>
+<li><code>c:ack_O</code></li>
+</ul>
+<p>Percolator also relies on a service named <em>timestamp oracle</em>. The timestamp oracle can produce timestamps in a strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp coming from the timestamp oracle will be used as the time when the read/write operation happens.</p>
+<p>Percolator is a multi-version storage, and a data item's version is represented by the timestamp when the transaction was committed.</p>
+<p>For example,</p>
+<table><thead><tr><th> key </th><th> v:data </th><th> v:lock </th><th> v&quot;write </th></tr></thead><tbody>
+<tr><td>k1   </td><td>14:&quot;value2&quot;<br/>12:<br/>10:&quot;value1&quot;</td><td>14:primary<br/>12:<br/>10:</td><td>14:<br/>12:data@10<br/>10:</td></tr>
+</tbody></table>
+<p>The table shows different versions of data for a single cell. The state shown in the table means that for key <code>k1</code>, value <code>&quot;value1&quot;</code> was committed at timestamp <code>12</code>. Then there is an uncommitted version whose value is <code>&quot;value2&quot;</code>, and it's uncommitted because there's a lock. You will understand why it is like this after understanding how transactions work.</p>
+<p>The remaining columns, <code>c:notify</code> and <code>c:ack_O</code>, are used for Percolator's incremental processing. After a modification, <code>c:notify</code> column is used to mark the modified cell to be dirty. Users can add some <em>observers</em> to Percolator which can do user-specified operations when they find data of their observed columns has changed. To find whether data is changed, the observers continuously scan the <code>notify</code> columns to find dirty cells. <code>c:ack_O</code> is the &quot;acknowledgment&quot; column of observer <code>O</code>, which is used to prevent a row from being incorrectly notified twice. It saves the timestamp of the observer's last execution.</p>
+<a class="header" href="#writing" id="writing"><h3>Writing</h3></a>
+<p>Percolator's transactions are committed by a 2-phase commit (2PC) algorithm. Its two phases are <code>Prewrite</code> and <code>Commit</code>.</p>
+<p>In <code>Prewrite</code> phase:</p>
+<ol>
+<li>Get a timestamp from the timestamp oracle, and we call the timestamp <code>start_ts</code> of the transaction.</li>
+<li>For each row involved in the transaction, put a lock in the <code>lock</code> column and write the value to the <code>data</code> column with the timestamp <code>start_ts</code>. One of these locks will be chosen as the <em>primary</em> lock, while others are <em>secondary</em> locks. Each lock contains the transaction's <code>start_ts</code>. Each secondary lock, in addition, contains the location of the primary lock.
+<ul>
+<li>If there's already a lock or newer version than <code>start_ts</code>, the current transaction will be rolled back because of write conflict.</li>
+</ul>
+</li>
+</ol>
+<p>And then, in the<code>Commit</code> phase:</p>
+<ol>
+<li>Get another timestamp, namely <code>commit_ts</code>.</li>
+<li>Remove the primary lock, and at the same time write a record to the <code>write</code> column with timestamp <code>commit_ts</code>, whose value records the transaction's <code>start_ts</code>. If the primary lock is missing, the commit fails.</li>
+<li>Repeat the process above for all secondary locks.</li>
+</ol>
+<p>Once step 2 (committing the primary) is done, the whole transaction is done. It doesn't matter if the process of committing the secondary locks failed.</p>
+<p>Let's see the example from the paper of Percolator. Assume we are writing two rows in a single transaction. At first, the data looks like this:</p>
+<table><thead><tr><th> key </th><th> bal:data     </th><th> bal:lock  </th><th> bal:write       </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 6:<br/>5:$10 </td><td> 6:<br/>5: </td><td> 6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 6:<br/>5:$2  </td><td> 6:<br/>5: </td><td> 6:data@5<br/>5: </td></tr>
+</tbody></table>
+<p>This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe's account. The first step is <code>Prewrite</code>:</p>
+<ol>
+<li>Get the <code>start_ts</code> of the transaction. In our example, it's <code>7</code>.</li>
+<li>For each row involved in this transaction, put a lock in the <code>lock</code> column, and write the data to the <code>data</code> column. One of the locks will be chosen as the primary lock.</li>
+</ol>
+<p>After <code>Prewrite</code>, our data looks like this:</p>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 7:$3<br/>6:<br>5:$10 </td><td> 7:primary<br/>6:<br/>5:         </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 7:$9<br/>6:<br/>5:$2 </td><td> 7:primary@Bob.bal<br/>6:<br/>5: </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<p>Then <code>Commit</code>:</p>
+<ol>
+<li>Get the <code>commit_ts</code>, in our case, <code>8</code>.</li>
+<li>Commit the primary: Remove the primary lock and write the commit record to the <code>write</code> column.</li>
+</ol>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 8:<br/>7:$3<br/>6:<br>5:$10 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td> 8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 7:$9<br/>6:<br/>5:$2 </td><td> 7:primary@Bob.bal<br/>6:<br/>5: </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<ol start="3">
+<li>Commit all secondary locks to complete the writing process.</li>
+</ol>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 8:<br/>7:$3<br/>6:<br>5:$10 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td> 8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 8:<br/>7:$9<br/>6:<br/>5:$2 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td> 8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<a class="header" href="#reading" id="reading"><h3>Reading</h3></a>
+<p>Reading from Percolator also requires a timestamp. The procedure to perform a read operation is as follows:</p>
+<ol>
+<li>Get a timestamp <code>ts</code>.</li>
+<li>Check if the row we are going to read is locked with a timestamp in the range <code>[0, ts]</code>.
+<ul>
+<li>If there is a lock with the timestamp in range <code>[0, ts]</code>, it means the row was locked by an earlier-started transaction. Then we are not sure whether that transaction will be committed before or after <code>ts</code>. In this case the reading will backoff and try again then.</li>
+<li>If there is no lock or the lock's timestamp is greater than <code>ts</code>, the read can continue.</li>
+</ul>
+</li>
+<li>Get the latest record in the row's <code>write</code> column whose <code>commit_ts</code> is in range <code>[0, ts]</code>. The record contains the <code>start_ts</code> of the transaction when it was committed.</li>
+<li>Get the row's value in the <code>data</code> column whose timestamp is exactly <code>start_ts</code>. Then the value is what we want.</li>
+</ol>
+<p>For example, consider this table again:</p>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 8:<br/>7:$3<br/>6:<br>5:$10 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td>8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 7:$9<br/>6:<br/>5:$2 </td><td> 7:primary@Bob.bal<br/>6:<br/>5: </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<p>Let's read Bob's balance.</p>
+<ol>
+<li>Get a timestamp. Assume it's <code>9</code>.</li>
+<li>Check the lock of the row. The row of Bob is not locked, so we continue.</li>
+<li>Get the latest record in the <code>write</code> column committed before <code>9</code>. We get a record with <code>commit_ts</code> equals to <code>8</code>, and<code>start_ts</code> <code>7</code>, which means, its corresponding data is at timestamp <code>7</code> in the <code>data</code> column.</li>
+<li>Get the value in the <code>data</code> column with timestamp <code>7</code>. <code>$3</code> is the result to the read.</li>
+</ol>
+<p>This algorithm provides us with the abilities of both lock-free read and historical read. In the above example, if we specify that we want to read at time point <code>7</code>, then we will see the write record at timestamp <code>6</code>, giving us the result <code>$10</code> at timestamp <code>5</code>.</p>
+<a class="header" href="#handling-conflicts" id="handling-conflicts"><h3>Handling Conflicts</h3></a>
+<p>Conflicts are identified by checking the <code>lock</code> column. A row can have many versions of data, but it can have at most one lock at any time.</p>
+<p>When we are performing a write operation, we try to lock every affected row in the <code>Prewrite</code> phase. If we failed to lock some of these rows, the whole transaction will be rolled back. Using an optimistic lock algorithm, sometimes Percolator's transactional write may encounter performance regressions in scenarios where conflicts occur frequently.</p>
+<p>To roll back a row, just simply remove its lock and its corresponding value in <code>data</code> column.</p>
+<a class="header" href="#tolerating-crashes" id="tolerating-crashes"><h3>Tolerating crashes</h3></a>
+<p>Percolator has the ability to survive crashes without breaking data integrity.</p>
+<p>First, let's see what will happen after a crash. A crash may happen during <code>Prewrite</code>, <code>Commit</code> or between these two phases. We can simply divide these conditions into two types: before committing the primary, or after committing the primary.</p>
+<p>So, when a transaction <code>T1</code> (either reading or writing) finds that a row <code>R1</code> has a lock which belongs to an earlier transaction <code>T0</code>, <code>T1</code> doesn't simply rollback itself immediately. Instead, it checks the state of <code>T0</code>'s primary lock.</p>
+<ul>
+<li>If the primary lock has disappeared and there's a record <code>data @ T0.start_ts</code> in the <code>write</code> column, it means that <code>T0</code> has been successfully committed. Then row <code>R1</code>'s stale lock can also be committed. Usually we call this <code>rolling forward</code>. After this, the new transaction <code>T1</code> resumes.</li>
+<li>If the primary lock has disappeared with nothing left, it means the transaction has been rolled back. Then row <code>R1</code>'s stale lock should also be rolled back. After this, <code>T1</code> resumes.</li>
+<li>If the primary lock exists but it's too old (we can determine this by saving the wall time to locks), it indicates that the transaction has crashed before being committed or rolled back. Roll back <code>T1</code> and it will resume.</li>
+<li>Otherwise, we consider transaction <code>T0</code> to be still running. <code>T1</code> can rollback itself, or try to wait for a while to see whether <code>T0</code> will be committed before <code>T1.start_ts</code>.</li>
+</ul>
+<a class="header" href="#percolator-in-tikv" id="percolator-in-tikv"><h2>Percolator in TiKV</h2></a>
+<p>TiKV is a distributed transactional key-value storage engine. Each key-value pair can be regarded as a row in Percolator.</p>
+<p>TiKV internally uses RocksDB, a key-value storage engine library, to persist data to local disk. RocksDB's atomic write batch and TiKV's transaction scheduler make it atomic to read and write a single user key, which is a requirement of Percolator.</p>
+<p>RocksDB provides a feature named <em>Column Family</em> (hereafter referred to as <em>CF</em>). An instance of RocksDB may have multiple CFs, and each CF is a separated key namespace and has its own LSM-Tree. However different CFs in the same RocksDB instance uses a common WAL, providing the ability to write to different CFs atomically.</p>
+<p>We divide a RocksDB instance to three CFs: <code>CF_DEFAULT</code>, <code>CF_LOCK</code> and <code>CF_WRITE</code>, which corresponds to Percolator's <code>data</code> column, <code>lock</code> column and <code>write</code> column respectively. There's an extra CF named <code>CF_RAFT</code> which is used to save some metadata of Raft, but that's beside our topic. The <code>notify</code> and <code>ack_O</code> columns are not present in TiKV, because for now TiKV doesn't need the ability of incremental processing.</p>
+<p>Then, we need to represent different versions of a key. We can simply compound a key and a timestamp as an internal key, which can be used in RocksDB. However, since a key can have at most one lock at a time, we don't need to add a timestamp to the key in <code>CF_LOCK</code>. Hence the content of each CF:</p>
+<ul>
+<li><code>CF_DEFAULT</code>: <code>(key, start_ts)</code> -&gt; <code>value</code></li>
+<li><code>CF_LOCK</code>: <code>key</code> -&gt; <code>lock_info</code></li>
+<li><code>CF_WRITE</code>: <code>(key, commit_ts)</code> -&gt; <code>write_info</code></li>
+</ul>
+<p>Our approach to compound user keys and timestamps together is:</p>
+<ol>
+<li>Encode the user key to <a href="https://github.com/facebook/mysql-5.6/wiki/MyRocks-record-format#memcomparable-format">memcomparable</a></li>
+<li>Bitwise invert the timestamp (an unsigned int64) and encode it into big-endian bytes.</li>
+<li>Append the encoded timestamp to the encoded key.</li>
+</ol>
+<p>For example, key <code>&quot;key1&quot;</code> and timestamp <code>3</code> will be encoded as <code>&quot;key1\x00\x00\x00\x00\xfb\xff\xff\xff\xff\xff\xff\xff\xfe&quot;</code>, where the first 9 bytes is the memcomparable-encoded key and the remaining 8 bytes is the inverted timestamp in big-endian. In this way, different versions of the same key are always adjacent in RocksDB; and for each key, newer versions are always before older ones.</p>
+<p>There are some differences between TiKV and the Percolator's paper. In TiKV, records in <code>CF_WRITE</code> has four different types: <code>Put</code>, <code>Delete</code>, <code>Rollback</code> and <code>Lock</code>. Only <code>Put</code> records need a corresponding value in <code>CF_DEFAULT</code>. When rolling back transactions, we don't simply remove the lock but writes a <code>Rollback</code> record in <code>CF_WRITE</code>. Different from Percolator's lock, the <code>Lock</code> type of write records in TiKV is produced by queries like <code>SELECT ... FOR UPDATE</code> in TiDB. For keys affected by this query, they are not only the objects for read, but the reading is also part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.</p>
+<a class="header" href="#introduction-2" id="introduction-2"><h1>Introduction</h1></a>
+<p>In the database field, scalability is the term we use to describe the capability of a system to handle a growing amount of work. Even if a system is working reliably and fast today, it doesn't mean it will necessarily work well in the future. One common reason for degradation is the increased load which exceeds what the system can process. In modern systems, the amount of data we handle can far outgrow our original expectations, so scalability is a critical consideration for the design of a database.</p>
+<p>A system whose performance improves after adding hardware, proportionally to the capacity added, is said to be a scalable system. TiKV is a highly scalable key-value store, especially comparing with other stand-alone key-value stores like <a href="https://rocksdb.org/">RocksDB</a> and <a href="https://github.com/google/leveldb">LevelDB</a>. In this chapter we will talk about the two main ways of scaling, horizontal and vertical, and how TiKV provide strong scalability based on Raft.</p>
+<a class="header" href="#horizontal-or-vertical" id="horizontal-or-vertical"><h1>Horizontal or Vertical</h1></a>
+<p>Methods of adding more resources for a particular application fall into two broad categories: horizontal and vertical scaling.</p>
+<a class="header" href="#horizontal-scaling" id="horizontal-scaling"><h2>Horizontal Scaling</h2></a>
+<p>Horizontal scaling, which is also known as scaling out, means adding more machines to a system and distributing the load across multiple smaller machines. As computer prices have dropped and performance continues to increase, high-performance computing applications have adopted low-cost commodity systems for tasks. System architects may configure hundreds of small computers in a cluster to obtain aggregate computing power that often exceeds that of computers based on a single traditional processor. The development of high-performance interconnects such as <a href="https://en.wikipedia.org/wiki/Gigabit_Ethernet">Gigabit Ethernet</a>, <a href="https://en.wikipedia.org/wiki/InfiniBand">InfiniBand</a> further fueled this model.</p>
+<a class="header" href="#vertical-scaling" id="vertical-scaling"><h2>Vertical Scaling</h2></a>
+<p>Vertical scaling, which is also known as scaling up, means adding resources to a single node in a system, typically involving the addition of CPUs or memory to a more powerful single computer. Such vertical scaling of existing systems also enables them to use virtualization technology more effectively, as it provides more resources for the hosted set of the operating system and application modules to share.</p>
+<a class="header" href="#tradeoff" id="tradeoff"><h2>Tradeoff</h2></a>
+<p>There are tradeoffs between the above two models. Larger numbers of computers mean increased management complexity, as well as a more complex programming model and issues such as throughput and latency between nodes. A light workload running on scaled-out systems maybe is even slower than on a single machine due to communication overhead. But the problem with a scale-up approach is that the performance doesn't grow in linearly proportional to cost. A system that runs on a single machine is often simpler, but high-end machines can become very expensive, so most intensive workloads cannot avoid scaling out.</p>
+<a class="header" href="#data-sharding" id="data-sharding"><h1>Data Sharding</h1></a>
+<a class="header" href="#what-is-the-partition" id="what-is-the-partition"><h2>What is the partition</h2></a>
+<p>For fault tolerance, TiKV replicates data to multiple nodes via the Raft consensus algorithm. For large datasets or high query throughput, managing all the data by one Raft state machine is not efficient and flexible, so we need to break the data up into partitions, also known as <em>sharding</em>. In TiKV, a partition is called a <code>Region</code>.</p>
+<p>With partitioning, we can move partitions to balance the load among all nodes of a cluster. How to decide which partitions to store on which nodes isn't covered here, it will be discussed later in a chapter related to PD.</p>
+<a class="header" href="#partitioning" id="partitioning"><h2>Partitioning</h2></a>
+<p>Different partitions can be placed on different nodes, and thus a large dataset can be distributed across many disks, and the query load can be distributed across many processors. But partitioning suffers from the issue of <em>hot spots</em>, where high load may end up on one partition but leave the other nodes idle. To avoid that, we can simply assign records to nodes randomly, but when reading a particular item there is no fast way of knowing which node is on.</p>
+<p>There are two general ways to map keys to partitions:</p>
+<a class="header" href="#partitioning-by-hash-of-key" id="partitioning-by-hash-of-key"><h3>Partitioning by hash of key</h3></a>
+<p>One way of partitioning is to assign a continuous range of hashes of keys to each partition. The partition boundaries can be evenly spaced, or they can be chosen by some kind of algorithm like <a href="https://en.wikipedia.org/wiki/Consistent_hashing">consistent hashing</a>. Due to the hash, keys can be distributed fairly among the partitions, effectively reducing hot spots, though not totally avoiding them. Unfortunately, this method fails to do efficient range queries, compared to partitioning by key range.</p>
+<a class="header" href="#partitioning-by-key-range" id="partitioning-by-key-range"><h3>Partitioning by key range</h3></a>
+<p>The other way of partitioning is to assign a continuous range of keys to each partition. It needs to record the boundaries between the ranges to determine which partition contains a given key, and then requests can be sent to the appropriate node. One key feature of key range partition is that it is friendly to range scans. However, the downside of the sorted order is that sequential reads and writes can lead to hot spots.</p>
+<p>Partitioning by range is the approach that TiKV uses. The main reason to choose it is scan-friendliness, meanwhile, for the split or merge of Regions, TiKV only needs to change meta-information about the range of the Region, which avoids moving actual data in a large extent.</p>
+<a class="header" href="#multi-raft" id="multi-raft"><h1>Multi-raft</h1></a>
+<p>If you've researched Consensus before, please note that comparing Multi-Raft to Raft is not at all like comparing Multi-Paxos to Paxos. Here Multi-Raft only means we manage multiple Raft consensus groups on one node. From the above section, we know that there are multiple different partitions on each node, if there is only one Raft group for each node, the partitions losing its meaning. So Raft group is divided into multiple Raft groups in terms of partitions, namely, Region.</p>
+<p>TiKV also can perform split or merge on Regions to make the partitions more flexible. When the size of a Region exceeds the limit, it will be divided into two or more Regions, and the range may change like \( [a, c) \) -&gt; \( [a, b) \) + \( [b, c) \); when the sizes of two sibling Regions are small enough, they will be merged into a bigger Region, and the range may change like \( [a, b) \) + \( [b, c) \) -&gt; \( [a, c) \).</p>
+<p><a href="multi-raft.png">multi-raft</a></p>
+<p>For each Raft group, the process of the algorithm is still as before, and we only introduce a layer on top of Raft to manage these Raft consensus groups as a whole.</p>
+<p>TiKV uses an event loop to drive all the processes in a batch manner. It polls all the Raft groups to drive the Raft state machine every 1000ms and accepts the requests from the outside clients and Raft messages sent by other nodes through the notification mechanism of the event loop.</p>
+<p>For each event loop tick, it handles the Raft ready of each Raft group:</p>
+<ol>
+<li>It traverses all the ready groups and uses a RocksDB's <code>WriteBatch</code> to handle all appending data and persist the corresponding result at the same time.</li>
+<li>If <code>WriteBatch</code> succeeds, it then sends messages of every Raft group to corresponding Followers. TiKV reuses the connection between two nodes for multiple Raft groups.</li>
+<li>Then it applies any committed entries and executes them.</li>
+</ol>
+<a class="header" href="#introduction-3" id="introduction-3"><h1>Introduction</h1></a>
+<p>In a distributed database environment, resource scheduling needs to meet the following requirements:</p>
+<ul>
+<li>Keeping data highly available: The scheduler needs to be able to manage data redundancy to keep the cluster available when some nodes fail.</li>
+<li>Balance server load: The scheduler needs to balance the load to prevent a single node from becoming a performance bottleneck for the entire system.</li>
+<li>Scalability: The scheduler needs to be able to scale to thousands of nodes.</li>
+<li>Fault tolerance: The scheduling process must not be stopped by the breaking down caused by a single node failure.</li>
+</ul>
+<p>In the TiKV cluster, resource scheduling is done by the Placement Driver (PD). In this chapter, we will first introduce the design of two scheduling systems (Kubernetes and Mesos), followed by the design and implementation of scheduler and placement in PD.</p>
+<a class="header" href="#scheduler-of-kubernetes" id="scheduler-of-kubernetes"><h1>Scheduler of Kubernetes</h1></a>
+<a class="header" href="#overview" id="overview"><h2>Overview</h2></a>
+<p>Kubernetes is a Docker-based open source container cluster management system initiated and maintained by the Google team. It supports not only common cloud platforms but also internal data centers.</p>
+<p>Kubernetes built a container scheduling service which is designed to allow users to manage cloud container clusters through Kubernetes clusters without the need for complex setup tasks. The system will automatically select the appropriate working node to perform specific container cluster scheduling processing.</p>
+<p>The scheduler needs to take into account individual and collective resource requirements, quality of service requirements, hardware/software/policy constraints, affinity and anti-affinity specifications, data locality, inter-workload interference, deadlines, and so on.</p>
+<a class="header" href="#scheduling-process" id="scheduling-process"><h2>Scheduling process</h2></a>
+<p>The scheduling process is mainly divided into 2 steps. In the <em>predicate</em> step, the scheduler filters out nodes that do not satisfy required conditions. And in the <em>priority</em> step, the scheduler sorts the nodes that meet all of the fit predicates, and then chooses the best one.</p>
+<a class="header" href="#predicate-stage" id="predicate-stage"><h3>Predicate stage</h3></a>
+<p>The scheduler provides some predicates algorithms by default. For instance, the <code>HostNamePred</code> predicate checks if the hostname matches the requested hostname; the <code>PodsFitsResourcePred</code> checks if a node has sufficient resources, such as CPU, memory, GPU, opaque int resources and so on, to run a pod. Relevant code can be found in <a href="https://github.com/kubernetes/kubernetes/tree/master/pkg/scheduler/algorithm/predicates">kubernetes/pkg/scheduler/algorithm/predicates/</a>.</p>
+<a class="header" href="#priority-stage" id="priority-stage"><h3>Priority stage</h3></a>
+<p>In the priority step, the scheduler uses the <code>PrioritizeNodes</code> function to rank all nodes by calling each priority functions sequentially:</p>
+<ul>
+<li>Each priority function is expected to set a score of 0-10 where 0 is the lowest priority score (least preferred node) and 10 is the highest.</li>
+<li>Add all (weighted) scores for each node to get a total score.</li>
+<li>Select the node with the highest score.</li>
+</ul>
+<a class="header" href="#references" id="references"><h2>References</h2></a>
+<ol>
+<li><a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/"><code>kube-scheduler</code> documentation</a></li>
+<li><a href="https://yeasy.gitbooks.io/docker_practice/kubernetes/">Kubernetes introduction (in Chinese)</a></li>
+<li><a href="http://carmark.github.io/2015/12/21/How-does-Kubernetes-scheduler-work/">How does Kubernetes' scheduler work</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/27754017">Kubernetes Scheduling (in Chinese)</a></li>
+</ol>
+<a class="header" href="#mesos" id="mesos"><h1>Mesos</h1></a>
+<a class="header" href="#overview-1" id="overview-1"><h2>Overview</h2></a>
+<p>Mesos was originally launched by UC Berkeley's AMPLab in 2009. It is lisenced under Apache and now operated by Mesosphere, Inc.</p>
+<p>Mesos can abstract and schedule the resources of the entire data center (including CPU, memory, storage, network, etc.). This allows multiple applications to run in a cluster at the same time without needing to care about the physical distribution of resources.</p>
+<p>Mesos has many compelling features, including:</p>
+<ul>
+<li>Support for large scale scenarios with tens of thousands of nodes (adopted by Apple, Twitter, eBay, etc.)</li>
+<li>Support for multiple application frameworks, including Marathon, Singularity, Aurora, etc.</li>
+<li>High Availability (relies on ZooKeeper)</li>
+<li>Support for Docker, LXC and other container techniques</li>
+<li>Providing APIs for several popular languages, including Python, Java, C++, etc.</li>
+<li>A simple and easy-to-use WebUI</li>
+</ul>
+<a class="header" href="#architecture-1" id="architecture-1"><h2>Architecture</h2></a>
+<p>It is important to notice that Mesos itself is only a resource scheduling framework. It is not a complete application management platform, so Mesos can't work only on its own. However, based on Mesos, it is relatively easy to provide distributed operation capabilities for various application management frameworks or middleware platforms. Multiple frameworks can also run in a single Mesos cluster at the same time, improving overall resource utilization efficiency.</p>
+<p><img src="mesos-architecture.png" alt="Figure 1" /></p>
+<a class="header" href="#components" id="components"><h2>Components</h2></a>
+<p>Mesos consists of a master process that manages slave daemons running on each cluster node, and frameworks that run tasks on these slaves.</p>
+<ul>
+<li>
+<p>Mesos master</p>
+<p>The <em>master</em> sees the global information, and is responsible for resource scheduling and logical control between different <em>frameworks</em>. The <em>frameworks</em> need to be registered to <em>master</em> in order to be used. It uses Zookeeper to achieve HA.</p>
+</li>
+<li>
+<p>Mesos salve</p>
+<p>The <em>slave</em> is responsible for reporting the resource status (idle resources, running status, etc.) on the slave node to <em>master</em>, and is responsible for isolating the local resources to perform the specific tasks assigned by master.</p>
+</li>
+<li>
+<p>Frameworks</p>
+<p>Each <em>framework</em> consists of two components: a <em>scheduler</em> that registers with the <em>master</em> to be offered resources, and an <em>executor</em> process that is launched on <em>slave</em> nodes to run the <em>framework</em>’s tasks.</p>
+</li>
+</ul>
+<a class="header" href="#resource-scheduling" id="resource-scheduling"><h2>Resource scheduling</h2></a>
+<p>To support the sophisticated schedulers of today's frameworks, Mesos introduces a distributed two-level scheduling mechanism called <em>resource offers</em>.</p>
+<p>Each resource offer is a list of free resources (for example, &lt;1Core CPU, 2GB RAM&gt;) on multiple slaves. While the <em>master</em> decides how many resources to offer to each framework according to an organizational policy, the frameworks’ schedulers select which of the offered resources to use. When a framework accepts offered resources, it passes Mesos a description of the tasks it wants to launch on them.</p>
+<p><img src="mesos-scheduling.png" alt="Figure 2" /></p>
+<p>The figure shows an example of how resource scheduling works:</p>
+<ol>
+<li>Slave 1 reports to the master that it has 4 CPUs and 4 GB of memory free. The master then invokes the allocation policy module, which tells it that framework 1 should be offered all available resources.</li>
+<li>The master sends a resource offer describing what is available on slave 1 to framework 1.</li>
+<li>The framework’s scheduler replies to the master with information about two tasks to run on the slave, using &lt;2 CPUs, 1 GB RAM&gt; for the first task, and &lt;1 CPUs, 2 GB RAM&gt; for the second task.</li>
+<li>Finally, the master sends the tasks to the slave, which allocates appropriate resources to the framework’s executor, which in turn launches the two tasks (depicted with dotted-line borders in the figure). Because 1 CPU and 1 GB of RAM are still unallocated, the allocation module may now offer them to framework 2.</li>
+</ol>
+<p>To maintain a thin interface and enable frameworks to evolve independently, Mesos does not require frameworks to specify their resource requirements or constraints. Instead, Mesos gives frameworks the ability to reject offers. A framework can reject resources that do not satisfy its constraints in order to wait for ones that do. Thus, the rejection mechanism enables frameworks to support arbitrarily complex resource constraints while keeping Mesos simple and scalable.</p>
+<a class="header" href="#references-1" id="references-1"><h2>References</h2></a>
+<ol>
+<li><a href="https://people.eecs.berkeley.edu/%7Ealig/papers/mesos.pdf">Mesos: A Platform for Fine-Grained Resource Sharing in the Data Center</a></li>
+<li><a href="https://yeasy.gitbooks.io/docker_practice/mesos/intro.html">Mesos introduction (in Chinese)</a></li>
+</ol>
+<a class="header" href="#distributed-sql-over-tikv" id="distributed-sql-over-tikv"><h1>Distributed SQL over TiKV</h1></a>
+<p>TiKV is the storage layer for <a href="https://github.com/pingcap/tidb">TiDB</a>, a distributed HTAP SQL database. So far,
+we have only explained how a distributed transactional Key-Value database is
+implemented. However this is still far from serving a SQL database. We will
+explore and cover the following things in this chapter:</p>
+<ul>
+<li>
+<p>Storage</p>
+<p>In this section we will see how the TiDB relational structure (i.e. SQL table
+records and indexes) are encoded into the Key-Value form in the latest
+version. We will also explore a new Key-Value format that is going to be
+implemented soon and some insights on even better Key-Value formats in future.</p>
+</li>
+<li>
+<p>Distributed SQL (DistSQL)</p>
+<p>Storing data in a distributed manner using TiKV only utilizes distributed I/O
+resources, while the TiDB node that receives SQL query is still in charge of
+processing all rows. We can go a step further by delegating some processing
+tasks into TiKV nodes. This way, we can utilize distributed CPU resources! In
+this section, we will take a look at these supported physical plan executors
+so far in TiKV and see how they enable TiDB executing SQL queries in a
+distributed way.</p>
+</li>
+<li>
+<p>TiKV Query Execution Engine</p>
+<p>When talking about executors we cannot ignore discussing the execution engine.
+Although executors running on TiKV are highly simplified and limited, we still
+need to carefully design the execution engine. It is critical to the
+performance of the system. This section will cover the traditional Volcano
+model execution engine used before TiKV 3.0, for example, how it works, pros
+and cons, and the architecture.</p>
+</li>
+<li>
+<p>Vectorization</p>
+<p>Vectorization is a technique that performs computing over a batch of values.
+By introducing vectorization into the execution engine, we will achieve higher
+performance. This section will introduce its theory and the architecture of
+the vectorized execution engine introduced in TiKV 3.0.</p>
+</li>
+</ul>
+<a class="header" href="#store" id="store"><h1>Store</h1></a>
+<a class="header" href="#distributed-sql" id="distributed-sql"><h1>Distributed SQL</h1></a>
+<p>By now we already know how <a href="https://github.com/pingcap/tidb">TiDB</a>'s relational structure is encoded into the Key-Value form with version.  In this section, we will focus on the following questions:</p>
+<ul>
+<li>What happens when <a href="https://github.com/pingcap/tidb">TiDB</a> receives a SQL query?</li>
+<li>How does <a href="https://github.com/pingcap/tidb">TiDB</a> execute SQL queries in a distributed way?</li>
+</ul>
+<a class="header" href="#what-happens-when-a-hrefhttpsgithubcompingcaptidbtidba-receives-a-sql-query" id="what-happens-when-a-hrefhttpsgithubcompingcaptidbtidba-receives-a-sql-query"><h2>What happens when <a href="https://github.com/pingcap/tidb">TiDB</a> receives a SQL query?</h2></a>
+<p>Firstly, let's have a look at the following example:</p>
+<pre><code>select count(*) from t where a + b  &gt; 5;
+</code></pre>
+<p><img src="images/select_from_tidb.png" alt="Figure 1" /></p>
+<p>As described in the above figure, when <a href="https://github.com/pingcap/tidb">TiDB</a> receives a SQL query from the client, it will process with the following steps:</p>
+<ol>
+<li><a href="https://github.com/pingcap/tidb">TiDB</a> receives a new SQL from the client.</li>
+<li><a href="https://github.com/pingcap/tidb">TiDB</a> prepares the processing plans for this request, meanwhile <a href="https://github.com/pingcap/tidb">TiDB</a> gets a timestamp from <a href="https://github.com/pingcap/pd">PD</a> as the <code>start_ts</code> of this transaction.</li>
+<li><a href="https://github.com/pingcap/tidb">TiDB</a> tries to get the information schema (metadata of the table) from TiKV.</li>
+<li><a href="https://github.com/pingcap/tidb">TiDB</a> prepares Regions for each related key according to the information schema and the SQL query. Then <a href="https://github.com/pingcap/tidb">TiDB</a> gets information for the related Regions from <a href="https://github.com/pingcap/pd">PD</a>.</li>
+<li><a href="https://github.com/pingcap/tidb">TiDB</a> groups the related keys by Region.</li>
+<li><a href="https://github.com/pingcap/tidb">TiDB</a> dispatches the tasks to the related TiKV concurrently.</li>
+<li><a href="https://github.com/pingcap/tidb">TiDB</a> reassembles the data and returns the data to the client.</li>
+</ol>
+<a class="header" href="#how-does-a-hrefhttpsgithubcompingcaptidbtidba-execute-sql-queries-in-a-distributed-way" id="how-does-a-hrefhttpsgithubcompingcaptidbtidba-execute-sql-queries-in-a-distributed-way"><h2>How does <a href="https://github.com/pingcap/tidb">TiDB</a> execute SQL queries in a distributed way?</h2></a>
+<p>In short, <a href="https://github.com/pingcap/tidb">TiDB</a> splits the task by Regions and sends them to TiKV concurrently.</p>
+<p>For the above example, we assume the rows with the primary key of table <code>t</code> are distributed in three Regions:</p>
+<ul>
+<li>Rows with the primary key in [0,100) are in Region 1.</li>
+<li>Rows with primary key in [100,1000) are in region 2.</li>
+<li>Rows with primary key in [1000,~) are in region 3.</li>
+</ul>
+<p>Now we can do <code>count</code> and sum the result from the above three Regions.</p>
+<p><img src="images/coprocessor_select.png" alt="Figure 2" /></p>
+<a class="header" href="#exectors" id="exectors"><h3>Exectors</h3></a>
+<p>Now we know <a href="https://github.com/pingcap/tidb">TiDB</a> splits a read task by Regions, but how does TiKV know what are its tasks to handle?
+Here <a href="https://github.com/pingcap/tidb">TiDB</a> will send a Directed Acyclic Graph (DAG) to TiKV with each node as an executor.</p>
+<p><img src="images/executors.jpg" alt="Figure 3" /></p>
+<p>Supported executors:</p>
+<ul>
+<li>TableScan: Scans the rows with the primary key from the KV store.</li>
+<li>IndexScan: It will scan the index data from the KV store.</li>
+<li>Selection: performs a filter (mostly for <code>where</code>). The input is <code>TableScan</code> or <code>IndexScan</code>.</li>
+<li>Aggregation: performs an aggregation (e.g. <code>count(*)</code>,<code>sum(xxx)</code>). The input is <code>TableScan</code>,<code>IndexScan</code>, or<code>Selection</code>.</li>
+<li>TopN: sorts the data and returns the top n matches, for example, <code>order by xxx limit 10</code>. The input is <code>TableScan</code>,<code>IndexScan</code>, or<code>Selection</code>.</li>
+</ul>
+<p><img src="images/executors-example.jpg" alt="executors-example" /></p>
+<p>For the above example, we have the following executors on Region 1:</p>
+<ul>
+<li>Aggregation: <code>count(*)</code>.</li>
+<li>Selection: <code>a + b &gt; 5</code></li>
+<li>TableScan: <code>range:[0,100)</code>.</li>
+</ul>
+<a class="header" href="#expression" id="expression"><h3>Expression</h3></a>
+<p>We have executors as nodes in the DAG, but how do we describe columns, constants, and functions in an <code>Aggregation</code> or a <code>Selection</code>?
+There are three types of expressions:</p>
+<ul>
+<li>Column: a column in the table.</li>
+<li>Constant: a constant, which could be a string, int, duration, and so on.</li>
+<li>Scalar function: describes a function.</li>
+</ul>
+<p><img src="images/expression.jpg" alt="Figure 4" /></p>
+<p>For the above example <code>select count(*) from t where a + b &gt; 5</code>, we have:</p>
+<ul>
+<li>Column: a, b.</li>
+<li>Scalar functions: <code>+</code>,<code>&gt;</code>.</li>
+<li>Constant: <code>5</code>.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+        
+        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+        
+        
+
+    </body>
+</html>

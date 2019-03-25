@@ -1,0 +1,339 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Percolator - Deep Dive TiKV</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li><a href="../overview/introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><a href="../consensus-algorithm/introduction.html"><strong aria-hidden="true">2.</strong> Consensus Algorithm</a></li><li><ol class="section"><li><a href="../consensus-algorithm/consistency-availability-partitioning.html"><strong aria-hidden="true">2.1.</strong> Consistency, Availability, &amp; Partitioning</a></li><li><a href="../consensus-algorithm/byzantine-failure.html"><strong aria-hidden="true">2.2.</strong> Byzantine Failure</a></li><li><a href="../consensus-algorithm/paxos.html"><strong aria-hidden="true">2.3.</strong> Paxos</a></li><li><a href="../consensus-algorithm/raft.html"><strong aria-hidden="true">2.4.</strong> Raft</a></li></ol></li><li><a href="../key-value-engine/introduction.html"><strong aria-hidden="true">3.</strong> Key-Value Engine</a></li><li><ol class="section"><li><a href="../key-value-engine/B-Tree-vs-Log-Structured-Merge-Tree.html"><strong aria-hidden="true">3.1.</strong> B-Tree vs Log-Structured Merge-Tree</a></li><li><a href="../key-value-engine/rocksdb.html"><strong aria-hidden="true">3.2.</strong> RocksDB</a></li></ol></li><li><a href="../distributed-transaction/introduction.html"><strong aria-hidden="true">4.</strong> Distributed Transaction</a></li><li><ol class="section"><li><a href="../distributed-transaction/isolation-level.html"><strong aria-hidden="true">4.1.</strong> Isolation Level</a></li><li><a href="../distributed-transaction/distributed-algorithms.html"><strong aria-hidden="true">4.2.</strong> Distributed Algorithms</a></li><li><a href="../distributed-transaction/pessimistic-and-optimistic-locking.html"><strong aria-hidden="true">4.3.</strong> Pessimistic &amp; Optimistic Locking</a></li><li><a href="../distributed-transaction/timestamp-oracle.html"><strong aria-hidden="true">4.4.</strong> Timestamp Oracle</a></li><li><a href="../distributed-transaction/percolator.html" class="active"><strong aria-hidden="true">4.5.</strong> Percolator</a></li></ol></li><li><a href="../scalability/introduction.html"><strong aria-hidden="true">5.</strong> Scalability</a></li><li><ol class="section"><li><a href="../scalability/horizontal-or-vertical.html"><strong aria-hidden="true">5.1.</strong> Horizontal or Vertical</a></li><li><a href="../scalability/data-sharding.html"><strong aria-hidden="true">5.2.</strong> Data Sharding</a></li><li><a href="../scalability/multi-raft.html"><strong aria-hidden="true">5.3.</strong> Multi-raft</a></li></ol></li><li><a href="../resource-scheduling/introduction.html"><strong aria-hidden="true">6.</strong> Resource Scheduling</a></li><li><ol class="section"><li><a href="../resource-scheduling/scheduler-of-kubernetes.html"><strong aria-hidden="true">6.1.</strong> Scheduler of Kubernetes</a></li><li><a href="../resource-scheduling/mesos.html"><strong aria-hidden="true">6.2.</strong> Mesos</a></li></ol></li><li><a href="../distributed-sql/introduction.html"><strong aria-hidden="true">7.</strong> Distributed SQL over TiKV</a></li><li><ol class="section"><li><a href="../TODO.html"><strong aria-hidden="true">7.1.</strong> Store</a></li><li><a href="../distributed-sql/dist-sql.html"><strong aria-hidden="true">7.2.</strong> Dist SQL</a></li></ol></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css" integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv" crossorigin="anonymous">
+
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js" integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O" crossorigin="anonymous"></script>
+
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js" integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">Deep Dive TiKV</h1> 
+
+                        <div class="right-buttons">
+                            <a href="../print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#percolator" id="percolator"><h1>Percolator</h1></a>
+<p>TiKV supports distributed transactions, which is inspired by Google's <a href="https://ai.google/research/pubs/pub36726.pdf">Percolator</a>. In this section, we will briefly introduce Percolator and how we make use of it in TiKV.</p>
+<a class="header" href="#what-is-percolator" id="what-is-percolator"><h2>What is Percolator?</h2></a>
+<p><em>Percolator</em> is a system built by Google for incremental processing on a very large data set. Since this is just a brief introduction, you can view the full paper <a href="https://ai.google/research/pubs/pub36726#">here</a> for more details. If you are already very familiar with it, you can skip this section and go directly to <a href="#Percolator-in-TiKV">Percolator in TiKV</a></p>
+<p>Percolator is built based on Google's BigTable, a distributed storage system that supports single-row transactions. Percolator implements distributed transactions in ACID snapshot-isolation semantics, which is not supported by BigTable. A column <code>c</code> of Percolator is actually divided into the following internal columns of BigTable:</p>
+<ul>
+<li><code>c:lock</code></li>
+<li><code>c:write</code></li>
+<li><code>c:data</code></li>
+<li><code>c:notify</code></li>
+<li><code>c:ack_O</code></li>
+</ul>
+<p>Percolator also relies on a service named <em>timestamp oracle</em>. The timestamp oracle can produce timestamps in a strictly increasing order. All read and write operations need to apply for timestamps from the timestamp oracle, and a timestamp coming from the timestamp oracle will be used as the time when the read/write operation happens.</p>
+<p>Percolator is a multi-version storage, and a data item's version is represented by the timestamp when the transaction was committed.</p>
+<p>For example,</p>
+<table><thead><tr><th> key </th><th> v:data </th><th> v:lock </th><th> v&quot;write </th></tr></thead><tbody>
+<tr><td>k1   </td><td>14:&quot;value2&quot;<br/>12:<br/>10:&quot;value1&quot;</td><td>14:primary<br/>12:<br/>10:</td><td>14:<br/>12:data@10<br/>10:</td></tr>
+</tbody></table>
+<p>The table shows different versions of data for a single cell. The state shown in the table means that for key <code>k1</code>, value <code>&quot;value1&quot;</code> was committed at timestamp <code>12</code>. Then there is an uncommitted version whose value is <code>&quot;value2&quot;</code>, and it's uncommitted because there's a lock. You will understand why it is like this after understanding how transactions work.</p>
+<p>The remaining columns, <code>c:notify</code> and <code>c:ack_O</code>, are used for Percolator's incremental processing. After a modification, <code>c:notify</code> column is used to mark the modified cell to be dirty. Users can add some <em>observers</em> to Percolator which can do user-specified operations when they find data of their observed columns has changed. To find whether data is changed, the observers continuously scan the <code>notify</code> columns to find dirty cells. <code>c:ack_O</code> is the &quot;acknowledgment&quot; column of observer <code>O</code>, which is used to prevent a row from being incorrectly notified twice. It saves the timestamp of the observer's last execution.</p>
+<a class="header" href="#writing" id="writing"><h3>Writing</h3></a>
+<p>Percolator's transactions are committed by a 2-phase commit (2PC) algorithm. Its two phases are <code>Prewrite</code> and <code>Commit</code>.</p>
+<p>In <code>Prewrite</code> phase:</p>
+<ol>
+<li>Get a timestamp from the timestamp oracle, and we call the timestamp <code>start_ts</code> of the transaction.</li>
+<li>For each row involved in the transaction, put a lock in the <code>lock</code> column and write the value to the <code>data</code> column with the timestamp <code>start_ts</code>. One of these locks will be chosen as the <em>primary</em> lock, while others are <em>secondary</em> locks. Each lock contains the transaction's <code>start_ts</code>. Each secondary lock, in addition, contains the location of the primary lock.
+<ul>
+<li>If there's already a lock or newer version than <code>start_ts</code>, the current transaction will be rolled back because of write conflict.</li>
+</ul>
+</li>
+</ol>
+<p>And then, in the<code>Commit</code> phase:</p>
+<ol>
+<li>Get another timestamp, namely <code>commit_ts</code>.</li>
+<li>Remove the primary lock, and at the same time write a record to the <code>write</code> column with timestamp <code>commit_ts</code>, whose value records the transaction's <code>start_ts</code>. If the primary lock is missing, the commit fails.</li>
+<li>Repeat the process above for all secondary locks.</li>
+</ol>
+<p>Once step 2 (committing the primary) is done, the whole transaction is done. It doesn't matter if the process of committing the secondary locks failed.</p>
+<p>Let's see the example from the paper of Percolator. Assume we are writing two rows in a single transaction. At first, the data looks like this:</p>
+<table><thead><tr><th> key </th><th> bal:data     </th><th> bal:lock  </th><th> bal:write       </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 6:<br/>5:$10 </td><td> 6:<br/>5: </td><td> 6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 6:<br/>5:$2  </td><td> 6:<br/>5: </td><td> 6:data@5<br/>5: </td></tr>
+</tbody></table>
+<p>This table shows Bob and Joe's balance. Now Bob wants to transfer his $7 to Joe's account. The first step is <code>Prewrite</code>:</p>
+<ol>
+<li>Get the <code>start_ts</code> of the transaction. In our example, it's <code>7</code>.</li>
+<li>For each row involved in this transaction, put a lock in the <code>lock</code> column, and write the data to the <code>data</code> column. One of the locks will be chosen as the primary lock.</li>
+</ol>
+<p>After <code>Prewrite</code>, our data looks like this:</p>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 7:$3<br/>6:<br>5:$10 </td><td> 7:primary<br/>6:<br/>5:         </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 7:$9<br/>6:<br/>5:$2 </td><td> 7:primary@Bob.bal<br/>6:<br/>5: </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<p>Then <code>Commit</code>:</p>
+<ol>
+<li>Get the <code>commit_ts</code>, in our case, <code>8</code>.</li>
+<li>Commit the primary: Remove the primary lock and write the commit record to the <code>write</code> column.</li>
+</ol>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 8:<br/>7:$3<br/>6:<br>5:$10 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td> 8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 7:$9<br/>6:<br/>5:$2 </td><td> 7:primary@Bob.bal<br/>6:<br/>5: </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<ol start="3">
+<li>Commit all secondary locks to complete the writing process.</li>
+</ol>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 8:<br/>7:$3<br/>6:<br>5:$10 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td> 8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 8:<br/>7:$9<br/>6:<br/>5:$2 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td> 8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<a class="header" href="#reading" id="reading"><h3>Reading</h3></a>
+<p>Reading from Percolator also requires a timestamp. The procedure to perform a read operation is as follows:</p>
+<ol>
+<li>Get a timestamp <code>ts</code>.</li>
+<li>Check if the row we are going to read is locked with a timestamp in the range <code>[0, ts]</code>.
+<ul>
+<li>If there is a lock with the timestamp in range <code>[0, ts]</code>, it means the row was locked by an earlier-started transaction. Then we are not sure whether that transaction will be committed before or after <code>ts</code>. In this case the reading will backoff and try again then.</li>
+<li>If there is no lock or the lock's timestamp is greater than <code>ts</code>, the read can continue.</li>
+</ul>
+</li>
+<li>Get the latest record in the row's <code>write</code> column whose <code>commit_ts</code> is in range <code>[0, ts]</code>. The record contains the <code>start_ts</code> of the transaction when it was committed.</li>
+<li>Get the row's value in the <code>data</code> column whose timestamp is exactly <code>start_ts</code>. Then the value is what we want.</li>
+</ol>
+<p>For example, consider this table again:</p>
+<table><thead><tr><th> key </th><th> bal:data </th><th> bal:lock </th><th> bal:write </th></tr></thead><tbody>
+<tr><td> Bob </td><td> 8:<br/>7:$3<br/>6:<br>5:$10 </td><td> 8:<br/>7:<br/>6:<br/>5: </td><td>8:data@7<br/>7:<br/>6:data@5<br/>5: </td></tr>
+<tr><td> Joe </td><td> 7:$9<br/>6:<br/>5:$2 </td><td> 7:primary@Bob.bal<br/>6:<br/>5: </td><td> 7:<br/>6:data@5<br/>5: </td></tr>
+</tbody></table>
+<p>Let's read Bob's balance.</p>
+<ol>
+<li>Get a timestamp. Assume it's <code>9</code>.</li>
+<li>Check the lock of the row. The row of Bob is not locked, so we continue.</li>
+<li>Get the latest record in the <code>write</code> column committed before <code>9</code>. We get a record with <code>commit_ts</code> equals to <code>8</code>, and<code>start_ts</code> <code>7</code>, which means, its corresponding data is at timestamp <code>7</code> in the <code>data</code> column.</li>
+<li>Get the value in the <code>data</code> column with timestamp <code>7</code>. <code>$3</code> is the result to the read.</li>
+</ol>
+<p>This algorithm provides us with the abilities of both lock-free read and historical read. In the above example, if we specify that we want to read at time point <code>7</code>, then we will see the write record at timestamp <code>6</code>, giving us the result <code>$10</code> at timestamp <code>5</code>.</p>
+<a class="header" href="#handling-conflicts" id="handling-conflicts"><h3>Handling Conflicts</h3></a>
+<p>Conflicts are identified by checking the <code>lock</code> column. A row can have many versions of data, but it can have at most one lock at any time.</p>
+<p>When we are performing a write operation, we try to lock every affected row in the <code>Prewrite</code> phase. If we failed to lock some of these rows, the whole transaction will be rolled back. Using an optimistic lock algorithm, sometimes Percolator's transactional write may encounter performance regressions in scenarios where conflicts occur frequently.</p>
+<p>To roll back a row, just simply remove its lock and its corresponding value in <code>data</code> column.</p>
+<a class="header" href="#tolerating-crashes" id="tolerating-crashes"><h3>Tolerating crashes</h3></a>
+<p>Percolator has the ability to survive crashes without breaking data integrity.</p>
+<p>First, let's see what will happen after a crash. A crash may happen during <code>Prewrite</code>, <code>Commit</code> or between these two phases. We can simply divide these conditions into two types: before committing the primary, or after committing the primary.</p>
+<p>So, when a transaction <code>T1</code> (either reading or writing) finds that a row <code>R1</code> has a lock which belongs to an earlier transaction <code>T0</code>, <code>T1</code> doesn't simply rollback itself immediately. Instead, it checks the state of <code>T0</code>'s primary lock.</p>
+<ul>
+<li>If the primary lock has disappeared and there's a record <code>data @ T0.start_ts</code> in the <code>write</code> column, it means that <code>T0</code> has been successfully committed. Then row <code>R1</code>'s stale lock can also be committed. Usually we call this <code>rolling forward</code>. After this, the new transaction <code>T1</code> resumes.</li>
+<li>If the primary lock has disappeared with nothing left, it means the transaction has been rolled back. Then row <code>R1</code>'s stale lock should also be rolled back. After this, <code>T1</code> resumes.</li>
+<li>If the primary lock exists but it's too old (we can determine this by saving the wall time to locks), it indicates that the transaction has crashed before being committed or rolled back. Roll back <code>T1</code> and it will resume.</li>
+<li>Otherwise, we consider transaction <code>T0</code> to be still running. <code>T1</code> can rollback itself, or try to wait for a while to see whether <code>T0</code> will be committed before <code>T1.start_ts</code>.</li>
+</ul>
+<a class="header" href="#percolator-in-tikv" id="percolator-in-tikv"><h2>Percolator in TiKV</h2></a>
+<p>TiKV is a distributed transactional key-value storage engine. Each key-value pair can be regarded as a row in Percolator.</p>
+<p>TiKV internally uses RocksDB, a key-value storage engine library, to persist data to local disk. RocksDB's atomic write batch and TiKV's transaction scheduler make it atomic to read and write a single user key, which is a requirement of Percolator.</p>
+<p>RocksDB provides a feature named <em>Column Family</em> (hereafter referred to as <em>CF</em>). An instance of RocksDB may have multiple CFs, and each CF is a separated key namespace and has its own LSM-Tree. However different CFs in the same RocksDB instance uses a common WAL, providing the ability to write to different CFs atomically.</p>
+<p>We divide a RocksDB instance to three CFs: <code>CF_DEFAULT</code>, <code>CF_LOCK</code> and <code>CF_WRITE</code>, which corresponds to Percolator's <code>data</code> column, <code>lock</code> column and <code>write</code> column respectively. There's an extra CF named <code>CF_RAFT</code> which is used to save some metadata of Raft, but that's beside our topic. The <code>notify</code> and <code>ack_O</code> columns are not present in TiKV, because for now TiKV doesn't need the ability of incremental processing.</p>
+<p>Then, we need to represent different versions of a key. We can simply compound a key and a timestamp as an internal key, which can be used in RocksDB. However, since a key can have at most one lock at a time, we don't need to add a timestamp to the key in <code>CF_LOCK</code>. Hence the content of each CF:</p>
+<ul>
+<li><code>CF_DEFAULT</code>: <code>(key, start_ts)</code> -&gt; <code>value</code></li>
+<li><code>CF_LOCK</code>: <code>key</code> -&gt; <code>lock_info</code></li>
+<li><code>CF_WRITE</code>: <code>(key, commit_ts)</code> -&gt; <code>write_info</code></li>
+</ul>
+<p>Our approach to compound user keys and timestamps together is:</p>
+<ol>
+<li>Encode the user key to <a href="https://github.com/facebook/mysql-5.6/wiki/MyRocks-record-format#memcomparable-format">memcomparable</a></li>
+<li>Bitwise invert the timestamp (an unsigned int64) and encode it into big-endian bytes.</li>
+<li>Append the encoded timestamp to the encoded key.</li>
+</ol>
+<p>For example, key <code>&quot;key1&quot;</code> and timestamp <code>3</code> will be encoded as <code>&quot;key1\x00\x00\x00\x00\xfb\xff\xff\xff\xff\xff\xff\xff\xfe&quot;</code>, where the first 9 bytes is the memcomparable-encoded key and the remaining 8 bytes is the inverted timestamp in big-endian. In this way, different versions of the same key are always adjacent in RocksDB; and for each key, newer versions are always before older ones.</p>
+<p>There are some differences between TiKV and the Percolator's paper. In TiKV, records in <code>CF_WRITE</code> has four different types: <code>Put</code>, <code>Delete</code>, <code>Rollback</code> and <code>Lock</code>. Only <code>Put</code> records need a corresponding value in <code>CF_DEFAULT</code>. When rolling back transactions, we don't simply remove the lock but writes a <code>Rollback</code> record in <code>CF_WRITE</code>. Different from Percolator's lock, the <code>Lock</code> type of write records in TiKV is produced by queries like <code>SELECT ... FOR UPDATE</code> in TiDB. For keys affected by this query, they are not only the objects for read, but the reading is also part of a write operation. To guarantee to be in snapshot-isolation, we make it acts like a write operation (though it doesn't write anything) to ensure the keys are locked and won't change before committing the transaction.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../distributed-transaction/timestamp-oracle.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../scalability/introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="../distributed-transaction/timestamp-oracle.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a href="../scalability/introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>RocksDB - Deep Dive TiKV</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li><a href="../overview/introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><a href="../consensus-algorithm/introduction.html"><strong aria-hidden="true">2.</strong> Consensus Algorithm</a></li><li><ol class="section"><li><a href="../consensus-algorithm/consistency-availability-partitioning.html"><strong aria-hidden="true">2.1.</strong> Consistency, Availability, &amp; Partitioning</a></li><li><a href="../consensus-algorithm/byzantine-failure.html"><strong aria-hidden="true">2.2.</strong> Byzantine Failure</a></li><li><a href="../consensus-algorithm/paxos.html"><strong aria-hidden="true">2.3.</strong> Paxos</a></li><li><a href="../consensus-algorithm/raft.html"><strong aria-hidden="true">2.4.</strong> Raft</a></li></ol></li><li><a href="../key-value-engine/introduction.html"><strong aria-hidden="true">3.</strong> Key-Value Engine</a></li><li><ol class="section"><li><a href="../key-value-engine/B-Tree-vs-Log-Structured-Merge-Tree.html"><strong aria-hidden="true">3.1.</strong> B-Tree vs Log-Structured Merge-Tree</a></li><li><a href="../key-value-engine/rocksdb.html" class="active"><strong aria-hidden="true">3.2.</strong> RocksDB</a></li></ol></li><li><a href="../distributed-transaction/introduction.html"><strong aria-hidden="true">4.</strong> Distributed Transaction</a></li><li><ol class="section"><li><a href="../distributed-transaction/isolation-level.html"><strong aria-hidden="true">4.1.</strong> Isolation Level</a></li><li><a href="../distributed-transaction/distributed-algorithms.html"><strong aria-hidden="true">4.2.</strong> Distributed Algorithms</a></li><li><a href="../distributed-transaction/pessimistic-and-optimistic-locking.html"><strong aria-hidden="true">4.3.</strong> Pessimistic &amp; Optimistic Locking</a></li><li><a href="../distributed-transaction/timestamp-oracle.html"><strong aria-hidden="true">4.4.</strong> Timestamp Oracle</a></li><li><a href="../distributed-transaction/percolator.html"><strong aria-hidden="true">4.5.</strong> Percolator</a></li></ol></li><li><a href="../scalability/introduction.html"><strong aria-hidden="true">5.</strong> Scalability</a></li><li><ol class="section"><li><a href="../scalability/horizontal-or-vertical.html"><strong aria-hidden="true">5.1.</strong> Horizontal or Vertical</a></li><li><a href="../scalability/data-sharding.html"><strong aria-hidden="true">5.2.</strong> Data Sharding</a></li><li><a href="../scalability/multi-raft.html"><strong aria-hidden="true">5.3.</strong> Multi-raft</a></li></ol></li><li><a href="../resource-scheduling/introduction.html"><strong aria-hidden="true">6.</strong> Resource Scheduling</a></li><li><ol class="section"><li><a href="../resource-scheduling/scheduler-of-kubernetes.html"><strong aria-hidden="true">6.1.</strong> Scheduler of Kubernetes</a></li><li><a href="../resource-scheduling/mesos.html"><strong aria-hidden="true">6.2.</strong> Mesos</a></li></ol></li><li><a href="../distributed-sql/introduction.html"><strong aria-hidden="true">7.</strong> Distributed SQL over TiKV</a></li><li><ol class="section"><li><a href="../TODO.html"><strong aria-hidden="true">7.1.</strong> Store</a></li><li><a href="../distributed-sql/dist-sql.html"><strong aria-hidden="true">7.2.</strong> Dist SQL</a></li></ol></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css" integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv" crossorigin="anonymous">
+
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js" integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O" crossorigin="anonymous"></script>
+
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js" integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">Deep Dive TiKV</h1> 
+
+                        <div class="right-buttons">
+                            <a href="../print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#rocksdb" id="rocksdb"><h1>RocksDB</h1></a>
+<p>RocksDB is a persistent key-value store for fast storage environment.
+Here are some highlight features from RocksDB:</p>
+<ol>
+<li>RocksDB uses a log structured database engine, written entirely in
+C++, for maximum performance. Keys and values are just
+arbitrarily-sized byte streams.</li>
+<li>RocksDB is optimized for fast, low latency storage such as flash
+drives and high-speed disk drives. RocksDB exploits the full
+potential of high read/write rates offered by flash or RAM.</li>
+<li>RocksDB is adaptable to different workloads. From database storage
+engines such as MyRocks to application data caching to embedded
+workloads, RocksDB can be used for a variety of data needs.</li>
+<li>RocksDB provides basic operations such as opening and closing a
+database, reading and writing to more advanced operations such as
+merging and compaction filters.</li>
+</ol>
+<p>TiKV uses RocksDB because RocksDB is mature and high-performance. In
+this section, we will explore how TiKV uses RocksDB. We won't talk
+about basic features like <code>Get</code>, <code>Put</code>, <code>Delete</code>, and <code>Iterate</code> here
+because their usage is simple and clear and works well too. Instead,
+we'll focus some special features used in TiKV below.</p>
+<a class="header" href="#a-hrefhttpsgithubcomfacebookrocksdbwikirocksdb-bloom-filterprefix-bloom-filtera" id="a-hrefhttpsgithubcomfacebookrocksdbwikirocksdb-bloom-filterprefix-bloom-filtera"><h2><a href="https://github.com/facebook/rocksdb/wiki/RocksDB-Bloom-Filter">Prefix Bloom Filter</a></h2></a>
+<p>A Bloom Filter is a magical data structure that uses a little resource
+but helps a lot. We won't explain the whole algorithm here. If you are
+not familiar with Bloom Filters, you can think it as a black box
+inside a dataset, which can tell you if a key <em>probably</em> exists or
+<em>definitely</em> does not without actually searching the
+dataset. Sometimes Bloom Filter gives you a false-positive answer
+although it rarely happens.</p>
+<p>TiKV uses a Bloom Filter as well as a variant which is called Prefix
+Bloom Filter (PBF). Instead of telling you if a whole key exists in a
+dataset or not, PBF tells you if there are some other keys with the
+same prefix exists. Since PBF only stores the unique prefixes instead
+of all unique whole keys, it can save some memory too with the down
+side of having larger false positive rate.</p>
+<p>TiKV supports MVCC, which means that there can be multiple versions
+for the same row stored in RocksDB. All versions of the same row share
+the same prefix (the row key) but have different timestamps as a suffix. When
+we want to read a row, we usually don't know about the exact version
+to read, but only want to read the latest version at a specific
+timestamp. This is where PBF shines. PBF can filter out data which is
+impossible to contain keys with the same prefix as the row key we
+provided. Then we just need to search in the data that may contain
+different versions of the row key and locate the specific version we
+want.</p>
+<a class="header" href="#tableproperties" id="tableproperties"><h2>TableProperties</h2></a>
+<p>RocksDB allows us to register some table properties collectors.  When
+RocksDB builds an SST file, it passes the sorted key-values one by one
+to the callback of each collector so that we can collect whatever we
+want. Then when the SST file is finished, the collected properties
+will be stored inside the SST file too.</p>
+<p>We use this feature to optimize two functionalities.</p>
+<p>The first one is for Split Check. Split check is a worker to check if
+regions are large enough to split.  We have to scan all the data
+within a region to calculate the size of the region at the original
+implementation, which is resource consuming. With the <code>TableProperties</code>
+feature, we record the size of small sub-ranges in each SST file so
+that we can calculate the approximate size of a region from the table
+properties without scanning any data at all.</p>
+<p>Another one is for MVCC Garbage Collection (GC). GC is a process to
+clean up garbage versions (versions older than the configured
+lifetime) of each row. If we have no idea whether a region contains
+some garbage versions or not, we have to check all regions
+periodically. To skip unnecessary garbage collection, we record some
+MVCC statistics (e.g. the number of rows and the number of versions)
+in each SST file. So before checking every region row by row, we check
+the table properties to see if it is necessary to do garbage
+collection on a region.</p>
+<a class="header" href="#compactrange" id="compactrange"><h2>CompactRange</h2></a>
+<p>From time to time, some regions may contain a lot of tombstone entries
+because of GC or other delete operations. Tombstone entries are not
+good for scan performance and waste disk space as well.</p>
+<p>So with the <code>TableProperties</code> feature, we can check every region
+periodically to see if it contains a lot of tombstones. If it does, we
+will compact the region range manually to drop tombstone entries and
+release disk space.</p>
+<p>We also use <code>CompactRange</code> to recover RocksDB from some mistakes like
+incompatible table properties across different TiKV versions.</p>
+<a class="header" href="#a-hrefhttpsgithubcomfacebookrocksdbwikieventlistenereventlistenera" id="a-hrefhttpsgithubcomfacebookrocksdbwikieventlistenereventlistenera"><h2><a href="https://github.com/facebook/rocksdb/wiki/EventListener">EventListener</a></h2></a>
+<p><code>EventListener</code> allows us to listen to some special events, like
+flush, compaction or write stall condition change. When a specific
+event is triggered or finished, RocksDB will invoke our callbacks with
+some information about the event.</p>
+<p>TiKV listens to the compaction event to observe the region size
+changes. As mentioned above, we calculate the approximate size of each
+region from the table properties. The approximate size will be
+recorded in the memory so that we don't need to calculate it again and
+again if nothing has changed. However, during compactions, some
+entries are dropped so the approximate size of some regions should be
+updated. That's why we listen to the compaction events and recalculate
+the approximate size of some regions when necessary.</p>
+<a class="header" href="#a-hrefhttpsgithubcomfacebookrocksdbwikicreating-and-ingesting-sst-filesingestexternalfilea" id="a-hrefhttpsgithubcomfacebookrocksdbwikicreating-and-ingesting-sst-filesingestexternalfilea"><h2><a href="https://github.com/facebook/rocksdb/wiki/Creating-and-Ingesting-SST-files">IngestExternalFile</a></h2></a>
+<p>RocksDB allows us to generate an SST file outside and then ingest the
+file into RocksDB directly. This feature can potentially save a lot of
+IO because RocksDB is smart enough to ingest a file to the bottom
+level if possible, which can reduce write amplification because the
+ingested file doesn't need to be compacted again and again.</p>
+<p>We use this feature to handle Raft snapshot. For example, when we want
+to add a replica to a new server. We can first generate a snapshot
+file from another server and then send the file to the new
+server. Then the new server can ingest that file into its RocksDB
+directly, which saves lots of work!</p>
+<p>We also use this feature to import a huge amount of data into TiKV. We
+have some tools to generate sorted SST files from different data
+sources and then ingest those files into different TiKV servers. This
+is super fast compared to writing key-values to a TiKV cluster in the
+usual way.</p>
+<a class="header" href="#deletefilesinrange" id="deletefilesinrange"><h2>DeleteFilesInRange</h2></a>
+<p>Previously, TiKV used the straightforward way to delete a range of data,
+which is scanning all the keys in the range and then delete them one
+by one. However, disk space would not release until the tombstones have
+been compacted. Even worse, disk space usage will actually increase
+temporarily because of newly written tombstones.</p>
+<p>As time goes on, users store more and more data in TiKV until their
+disk space is insufficient. Then users will try to drop some tables or
+add more stores and expect the disk space usage to decrease in a short
+time. But TiKV didn't meet expectations with this method. We first tried
+to solve this by using the <code>DeleteRange</code> feature in RocksDB. However,
+<code>DeleteRange</code> turns out to be unstable and can not release disk space
+fast enough.</p>
+<p>A faster way to release disk space is to delete some files directly,
+which leads us to the <code>DeleteFilesInRange</code> feature. But this feature
+is not perfect, it is quite dangerous because it breaks the snapshot
+consistency. If you acquire a snapshot from RocksDB,
+use <code>DeleteFilesInRange</code> to delete some files, then try to read that data
+you will find that some of it is missing. So we
+should use this feature carefully.</p>
+<p>TiKV uses <code>DeleteFilesInRange</code> to destroy tombstone regions and GC
+dropped tables. Both cases have a prerequisite that the dropped range
+must not be accessed anymore.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../key-value-engine/B-Tree-vs-Log-Structured-Merge-Tree.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../distributed-transaction/introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="../key-value-engine/B-Tree-vs-Log-Structured-Merge-Tree.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a href="../distributed-transaction/introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>
