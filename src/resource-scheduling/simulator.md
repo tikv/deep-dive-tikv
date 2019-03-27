@@ -9,8 +9,8 @@ and evaluate the effectiveness of design schemes.
 
 ## Workflow
 
-Since our targeted audience are people who are interested in TiKV, we will
-focus on using the simulator to deal with the scheduling problem.
+We'll focus on how the simulator is used in TiKV to deal with scheduling
+problems.
 In general, when there is a lack of resources or the problem is hard to
 reproduce, we might consider using the simulator.
 
